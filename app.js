@@ -1,32 +1,41 @@
+// Импортируем HTML-код как чистые текстовые строки (флаг ?raw)
+import welcomeHTML from './components/welcome/welcome.html?raw';
+import mainPageHTML from './components/main-page/main-page.html?raw';
+
+// Импортируем логику инициализации скриптов
 import { initWelcome } from './components/welcome/welcome.js';
 import { initMainPage } from './components/main-page/main-page.js';
 
-// Глобальное состояние (убрали лишние свойства)
+// Глобальное состояние сессии
 const appState = {
     projectName: '',
-    template: 'empty'
+    template: 'empty',
+    walls: [],
+    furniture: []
 };
 
-// Проверяем наличие элементов перед запуском, чтобы избежать падения скрипта
-const welcomeStep = document.getElementById('welcome-step');
-const mainPageStep = document.getElementById('main-page-step');
+const welcomeContainer = document.getElementById('welcome-step');
+const mainPageContainer = document.getElementById('main-page-step');
 
 function startApp() {
-    if (!welcomeStep || !mainPageStep) {
-        console.error("Критическая ошибка: Корневые контейнеры не найдены в index.html!");
-        return;
-    }
+    if (!welcomeContainer || !mainPageContainer) return;
 
-    // Запускаем окно приветствия
+    // 1. Вставляем разметку приветствия из родного файла и запускаем скрипт
+    welcomeContainer.innerHTML = welcomeHTML;
+    
     initWelcome(appState, () => {
-        // Логика, которая сработает ПОСЛЕ нажатия кнопки "Создать проект"
-        welcomeStep.classList.add('hidden');     // Прячем окно приветствия
-        mainPageStep.classList.remove('hidden'); // Показываем Главную страницу
+        // Логика, которая сработает ПОСЛЕ создания проекта:
         
-        // Передаем управление главной странице
+        // Переносим разметку главной страницы из её файла в контейнер
+        mainPageContainer.innerHTML = mainPageHTML;
+        
+        // Скрываем приветствие, показываем рабочую зону
+        welcomeContainer.classList.add('hidden');
+        mainPageContainer.classList.remove('hidden');
+        
+        // Активируем логику главной страницы и сетки карточек
         initMainPage(appState);
     });
 }
 
-// Запускаем приложение, когда структура страницы полностью готова
 document.addEventListener('DOMContentLoaded', startApp);

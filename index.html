@@ -7,92 +7,15 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="components/welcome/welcome.css">
     <link rel="stylesheet" href="components/main-page/main-page.css">
+    <link rel="stylesheet" href="components/editor2d/editor2d.css">
 </head>
 <body>
 
-    <!-- 1. ОКНО ПРИВЕТСТВИЯ (Тот самый серый оверлей) -->
-    <div class="welcome-overlay" id="welcome-step">
-        <div class="welcome-modal">
-            <div class="welcome-header">
-                <h2>📐 Добро пожаловать!</h2>
-                <p>Пожалуйста, заполните стартовую анкету проекта.</p>
-            </div>
-            <form class="welcome-form" id="welcome-form-element">
-                <div class="input-field">
-                    <label>Название вашего проекта:</label>
-                    <input type="text" id="welcome-project-name" value="Моя новая кухня" required>
-                </div>
-                <button type="submit" id="welcome-submit-btn">Создать проект →</button>
-            </form>
-        </div>
-    </div>
+    <!-- 1. КОНТЕЙНЕР ДЛЯ ОКНА ПРИВЕТСТВИЯ -->
+    <div class="welcome-overlay" id="welcome-step"></div>
 
-    <!-- 2. ГЛАВНАЯ СТРАНИЦА (Изначально скрыта) -->
-    <div id="main-page-step" class="hidden">
-        <div class="main-page-layout">
-            <header class="main-header">
-                <div class="logo">📐 FurnitureCAD</div>
-                <nav class="steps-nav">
-                    <div class="step-item active" data-step="start">
-                        <span class="step-num">🏠</span> STAPT
-                    </div>
-                    <div class="step-arrow"></div>
-                    <div class="step-item" data-step="room">
-                        <span class="step-num">1</span> ПОМЕЩЕНИЕ
-                    </div>
-                    <div class="step-arrow"></div>
-                    <div class="step-item" data-step="furniture">
-                        <span class="step-num">2</span> ОБСТАНОВКА
-                    </div>
-                </nav>
-                <div class="project-badge" id="main-project-name">Проект</div>
-            </header>
-
-            <div class="workspace-area">
-                <div class="templates-section">
-                    <div class="section-title-bar">
-                        <button class="plus-btn">+</button>
-                        <span>Начните с планирования этажа</span>
-                    </div>
-                    
-                    <div class="nobilia-grid">
-                        <div class="nobilia-card" data-template="rectangle">
-                            <div class="card-preview-box">
-                                <svg viewBox="0 0 100 100" class="shape-svg"><rect x="25" y="25" width="50" height="50" rx="2" /></svg>
-                            </div>
-                            <div class="card-label">Прямоугольник</div>
-                        </div>
-
-                        <div class="nobilia-card" data-template="free">
-                            <div class="card-preview-box">
-                                <svg viewBox="0 0 100 100" class="shape-svg">
-                                    <path d="M30 70 L45 35 L75 40 L65 75 Z" />
-                                    <path d="M20 80 L35 75 L30 60" style="stroke: #334155; stroke-width: 2; fill: none;" />
-                                </svg>
-                            </div>
-                            <div class="card-label">Свободное планирование</div>
-                        </div>
-
-                        <div class="nobilia-card" data-template="l-shape">
-                            <div class="card-preview-box">
-                                <span class="badge-alert">!</span>
-                                <svg viewBox="0 0 100 100" class="shape-svg"><path d="M30 25 H70 V55 H50 V75 H30 Z" /></svg>
-                            </div>
-                            <div class="card-label">Г-образная форма</div>
-                        </div>
-
-                        <div class="nobilia-card" data-template="polygon">
-                            <div class="card-preview-box">
-                                <span class="badge-alert">!</span>
-                                <svg viewBox="0 0 100 100" class="shape-svg"><path d="M30 25 H60 L75 45 V75 H30 Z" /></svg>
-                            </div>
-                            <div class="card-label">5-угольная форма</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 2. КОНТЕЙНЕР ДЛЯ ГЛАВНОЙ СТРАНИЦЫ (Изначально скрыт) -->
+    <div id="main-page-step" class="hidden"></div>
 
     <script type="module" src="app.js"></script>
 </body>
