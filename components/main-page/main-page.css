@@ -1,3 +1,6 @@
+/* components/main-page/main-page.css */
+/* Стили для главного интерфейса приложения, шапки шагов и сетки шаблонов в стиле Nobilia */
+
 .main-page-layout {
     display: flex;
     flex-direction: column;
@@ -20,7 +23,7 @@
 .logo {
     font-weight: 800;
     font-size: 20px;
-    color: #cc0000; /* Красный фирменный акцент под Nobilia */
+    color: #cc0000;
     letter-spacing: -0.5px;
 }
 
@@ -38,22 +41,26 @@
     font-size: 13px;
     font-weight: 700;
     color: #94a3b8;
+    position: relative; /* Добавили, чтобы красная линия позиционировалась относительно кнопки */
+    cursor: pointer;
+    height: 100%; /* Растянули на всю высоту шапки для удобства клика */
 }
 
 .step-item.active {
     color: #0f172a;
-    position: relative;
 }
 
-/* Красная подложка-стрелка под активным пунктом СТАРТ */
+/* ФИКСИРОВАННАЯ КРАСНАЯ ЛИНИЯ ПО ЦЕНТРУ АКТИВНОГО ШАГА */
 .step-item.active::after {
     content: '';
     position: absolute;
-    bottom: -22px;
-    left: 0;
-    width: 100%;
+    bottom: -2px;  /* Положили ровно на нижнюю границу шапки */
+    left: 50%;     /* Сдвигаем на центр кнопки */
+    transform: translateX(-50%); /* Идеально центрируем назад по оси X */
+    width: 45px;   /* ЖЕСТКАЯ ФИКСИРОВАННАЯ ШИРИНА — больше не прыгает! */
     height: 4px;
     background: #cc0000;
+    border-radius: 2px 2px 0 0; /* Скруглили верхние углы */
 }
 
 .step-num {
@@ -162,7 +169,6 @@
     position: relative;
 }
 
-/* Иконки-индикаторы в углу (красные кружки с человечками) */
 .badge-alert {
     position: absolute;
     top: 12px;
@@ -198,13 +204,7 @@
     display: flex;
     align-items: center;
 }
-.info-section .highlight {
-    font-weight: 700;
-    color: #cc0000;
-}
-.step-item {
-    cursor: pointer; /* Делаем верхние вкладки кликабельными */
-}
+
 /* Блок и кнопка продолжения текущего проекта */
 .continue-project-box {
     width: 100%;
