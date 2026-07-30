@@ -1,100 +1,221 @@
-/* Обнуляем базовые отступы и настраиваем бокс-модель */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* Фиксируем экран, чтобы не было полос прокрутки */
-body {
-    background-color: #f1f5f9; /* Мягкий светло-серый фон */
-    color: #0f172a;
+/* Полноэкранный темный полупрозрачный фон */
+.welcome-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
     height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Верхняя панель навигации (Шапка сайта) */
-.main-header {
-    background-color: #ffffff;
-    height: 60px;
-    min-height: 60px;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    z-index: 100;
-}
-
-.logo {
-    font-weight: 700;
-    font-size: 18px;
-    color: #0f172a;
-    letter-spacing: -0.5px;
-}
-
-.tabs-nav {
-    display: flex;
-    gap: 8px;
-    height: 100%;
-    align-items: center;
-}
-
-/* Кнопки переключения вкладок */
-.nav-tab {
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.nav-tab:hover:not(:disabled) {
-    background-color: #f8fafc;
-    color: #0f172a;
-}
-
-.nav-tab.active {
-    background-color: #e2e8f0;
-    color: #0f172a;
-    font-weight: 600;
-}
-
-.nav-tab:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-}
-
-/* Индикатор названия текущего проекта */
-.project-title-display {
-    font-size: 14px;
-    color: #64748b;
-    font-weight: 500;
-    background: #f8fafc;
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    max-width: 200px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Главная рабочая область под шапкой */
-.app-viewport {
-    flex: 1;
+    background-color: rgba(15, 23, 42, 0.6); /* Полупрозрачный slate цвет */
+    backdrop-filter: blur(4px); /* Легкое размытие заднего плана */
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-    height: calc(100vh - 60px);
-    width: 100vw;
+    z-index: 9999; /* Поверх всего */
+    transition: opacity 0.3s ease;
+}
+
+/* Само центрированное окно анкеты */
+.welcome-container {
+    display: flex;
+    width: 90vw;
+    max-width: 1000px;
+    height: 80vh;
+    max-height: 650px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Левое меню внутри окна */
+.welcome-sidebar {
+    width: 280px;
+    background-color: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.welcome-sidebar h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+.sidebar-menu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-menu li {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.sidebar-menu li.active {
+    border-color: #0071e3;
+    color: #0071e3;
+    background-color: #f0f7ff;
+}
+
+.sidebar-settings {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sidebar-settings h4 {
+    font-size: 13px;
+    color: #475569;
+}
+
+.mini-input {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mini-input label {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.mini-input input {
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    background: #ffffff;
+}
+
+/* Правая контентная часть анкеты */
+.welcome-main {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    background: #ffffff;
+}
+
+.welcome-top-bar #project-name {
+    font-size: 24px;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    border-bottom: 2px dashed #cbd5e1;
+    padding-bottom: 6px;
+    width: 100%;
+    max-width: 400px;
+    outline: none;
+    color: #0f172a;
+}
+
+.welcome-top-bar #project-name:focus {
+    border-bottom-color: #0071e3;
+}
+
+/* Сетка карточек */
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    flex: 1;
+    align-content: flex-start;
+}
+
+.template-card {
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.template-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+}
+
+.template-card.selected {
+    border-color: #0071e3;
+    background-color: #f0f7ff;
+    color: #0071e3;
+}
+
+.card-icon-wrapper {
+    color: #64748b;
+    padding: 16px;
+    background-color: #f1f5f9;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.template-card.selected .card-icon-wrapper {
+    color: #0071e3;
+    background-color: #e0f0ff;
+}
+
+.card-info h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #0f172a;
+}
+
+.card-info p {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* Нижняя панель с кнопкой */
+.welcome-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.start-action-btn {
+    background-color: #0071e3;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.start-action-btn:hover {
+    background-color: #0077ed;
 }

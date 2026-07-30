@@ -11,21 +11,25 @@
 </head>
 <body>
 
-    <!-- Главная верхняя панель (навигация по вкладкам) -->
+    <!-- Главная верхняя панель (постоянный интерфейс) -->
     <header class="main-header">
         <div class="logo">📐 FurnitureCAD</div>
         <nav class="tabs-nav">
-            <button class="nav-tab active" data-target="welcome">1. Приветствие</button>
-            <button class="nav-tab" data-target="editor2d" id="tab-2d" disabled>2. План комнаты (2D)</button>
-            <button class="nav-tab" data-target="editor3d" id="tab-3d" disabled>3. Конструктор (3D)</button>
+            <button class="nav-tab active" data-target="editor2d" id="tab-2d">План комнаты (2D)</button>
+            <button class="nav-tab" data-target="editor3d" id="tab-3d" disabled>Конструктор (3D)</button>
         </nav>
         <div class="project-title-display" id="project-title">Новый проект</div>
     </header>
 
-    <!-- Основной контейнер приложения, куда динамически подгружаются экраны -->
+    <!-- Основная рабочая область, где всегда живет редактор -->
     <main class="app-viewport" id="app-viewport">
-        <!-- Сюда JS загрузит интерфейс приветствия при старте -->
+        <!-- Сюда JS сразу загрузит 2D редактор, но поверх него покажется приветствие -->
     </main>
+
+    <!-- Стартовое приветственное окно-анкета поверх всего сайта -->
+    <div class="welcome-overlay" id="welcome-overlay">
+        <!-- Сюда динамически подгрузится welcome.html -->
+    </div>
 
     <!-- Главный управляющий скрипт -->
     <script type="module" src="app.js"></script>
