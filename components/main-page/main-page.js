@@ -1,58 +1,130 @@
 import { initEditor2D } from '../editor2d/editor2d.js';
 
 export function initMainPage(appState) {
-    // Выводим имя проекта в шапку страницы
-    const projectBadge = document.getElementById('main-project-name');
-    if (projectBadge) projectBadge.textContent = appState.projectName;
+    const mainPageContainer = document.getElementById('main-page-step');
+    if (!mainPageContainer) return;
 
-    const cards = document.querySelectorAll('.nobilia-card');
-    const templatesSection = document.querySelector('.templates-section');
-    const workspaceArea = document.querySelector('.workspace-area');
-
-    cards.forEach(card => {
-        card.addEventListener('click', () => {
-            const selectedTemplate = card.getAttribute('data-template');
-            appState.template = selectedTemplate;
-
-            console.log('Выбран шаблон помещения:', selectedTemplate);
-
-            // 1. Переключаем визуальный шаг в шапке на "ПОМЕЩЕНИЕ"
-            const stepStart = document.querySelector('[data-step="start"]');
-            const stepRoom = document.querySelector('[data-step="room"]');
-            if (stepStart) stepStart.classList.remove('active');
-            if (stepRoom) stepRoom.classList.add('active');
-
-            // 2. Очищаем зону шаблонов и вставляем туда разметку 2D-редактора
-            if (templatesSection) templatesSection.remove();
-
-            // Вставляем разметку полноценного 2D-редактора
-            workspaceArea.innerHTML = `
-                <div class="editor-2d-container">
-                    <!-- Боковая панель инструментов -->
-                    <aside class="editor-sidebar">
-                        <h3>Инструменты 2D</h3>
-                        <div class="tool-section">
-                            <button class="tool-btn active" id="tool-wall">🧱 Рисовать стены</button>
-                            <button class="tool-btn" id="tool-select" disabled>🎯 Выделение</button>
-                        </div>
-                        <div class="info-section">
-                            <h4>Параметры</h4>
-                            <p>Высота потолка: 2700 мм</p>
-                            <p>Толщина стен: 200 мм</p>
-                        </div>
-                        <button class="clear-btn" id="btn-clear-canvas">🗑️ Очистить всё</button>
-                        <button class="next-step-btn" id="btn-to-3d">Готово, в 3D →</button>
-                    </aside>
-
-                    <!-- Область интерактивного чертежа -->
-                    <div class="canvas-wrapper">
-                        <canvas id="floorplan-canvas"></canvas>
+    // Сохраняем шаблон HTML-разметки стартового экрана выбора комнат в переменную
+    const startScreenHTML = `
+        <div class="templates-section">
+            <div class="section-title-bar">
+                <button class="plus-btn">+</button>
+                <span>Начните с планирования этажа</span>
+            </div>
+            <div class="nobilia-grid">
+                <div class="nobilia-card" data-template="rectangle">
+                    <div class="card-preview-box">
+                        <svg viewBox="0 0 100 100" class="shape-svg"><rect x="25" y="25" width="50" height="50" rx="2" /></svg>
                     </div>
+                    <div class="card-label">Прямоугольник</div>
                 </div>
-            `;
+                <div class="nobilia-card" data-template="free">
+                    <div class="card-preview-box">
+                        <svg viewBox="0 0 100 100" class="shape-svg">
+                            <path d="M30 70 L45 35 L75 40 L65 75 Z" />
+                            <path d="M20 80 L35 75 L30 60" style="stroke: #334155; stroke-width: 2; fill: none;" />
+                        </svg>
+                    </div>
+                    <div class="card-label">Свободное планирование</div>
+                </div>
+                <div class="nobilia-card" data-template="l-shape">
+                    <div class="card-preview-box">
+                        <span class="badge-alert">!</span>
+                        <svg viewBox="0 0 100 100" class="shape-svg"><path d="M30 25 H70 V55 H50 V75 H30 Z" /></svg>
+                    </div>
+                    <div class="card-label">Г-образная форма</div>
+                </div>
+                <div class="nobilia-card" data-template="polygon">
+                    <div class="card-preview-box">
+                        <span class="badge-alert">!</span>
+                        <svg viewBox="0 0 100 100" class="shape-svg"><path d="M30 25 H60 L75 45 V75 H30 Z" /></svg>
+                    </div>
+                    <div class="card-label">5-угольная форма</div>
+                </div>
+            </div>
+        </div>
+    `;
 
-            // 3. Запускаем холст и логику рисования стен
-            initEditor2D(appState);
+    // Функция отрисовки интерфейса 2D-редактора
+    function loadEditorInterface() {
+        const workspaceArea = document.querySelector('.workspace-area');
+        if (!workspaceArea) return;
+
+        workspaceArea.innerHTML = `
+            <div class="editor-2d-container">
+                <aside class="editor-sidebar">
+                    <h3>Инструменты 2D</h3>
+                    <div class="tool-section">
+                        <button class="tool-btn active" id="tool-wall">🧱 Рисовать стены</button>
+                        <button class="tool-btn" id="tool-select">🎯 Режим осмотра</button>
+                    </div>
+                    <div class="info-section">
+                        <h4>Параметры комнаты</h4>
+                        <p>Высота потолка: <span class="highlight">2700 мм</span></p>
+                        <p>Толщина стен: <span class="highlight">200 мм</span></p>
+                        <p id="wall-len-info">Длина стены: <span class="highlight">—</span></p>
+                    </div>
+                    <button class="clear-btn" id="btn-clear-canvas">🗑️ Очистить всё</button>
+                    <button class="next-step-btn" id="btn-to-3d">Готово, в 3D →</button>
+                </aside>
+                <div class="canvas-wrapper">
+                    <canvas id="floorplan-canvas"></canvas>
+                </div>
+            </div>
+        `;
+        initEditor2D(appState);
+    }
+
+    // Функция переключения активных классов в шапке
+    function updateHeaderTabs(activeStep) {
+        document.querySelectorAll('.step-item').forEach(item => {
+            if (item.getAttribute('data-step') === activeStep) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    // Инициализация кликов по стартовым карточкам шаблонов
+    function bindCardClicks() {
+        document.querySelectorAll('.nobilia-card').forEach(card => {
+            card.addEventListener('click', () => {
+                appState.template = card.getAttribute('data-template');
+                
+                // Переключаем вкладку в шапке
+                updateHeaderTabs('room');
+                
+                // Загружаем редактор
+                loadEditorInterface();
+            });
+        });
+    }
+
+    // Вешаем логику на верхние вкладки (свободная навигация)
+    document.querySelectorAll('.step-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const targetStep = item.getAttribute('data-step');
+            const workspaceArea = document.querySelector('.workspace-area');
+            if (!workspaceArea) return;
+
+            if (targetStep === 'start') {
+                updateHeaderTabs('start');
+                workspaceArea.innerHTML = startScreenHTML;
+                bindCardClicks(); // Снова активируем карточки
+            } else if (targetStep === 'room') {
+                updateHeaderTabs('room');
+                loadEditorInterface();
+            } else if (targetStep === 'furniture') {
+                updateHeaderTabs('furniture');
+                workspaceArea.innerHTML = `<div style="padding:40px; color:#64748b; font-weight:600; text-align:center; width:100%;">🎨 Модуль 3D-обстановки (Three.js) готов к подключению!</div>`;
+            }
         });
     });
+
+    // Вывод имени проекта в шапку
+    document.getElementById('main-project-name').textContent = appState.projectName;
+
+    // Самый первый запуск: вешаем обработчики на карточки
+    bindCardClicks();
 }
