@@ -1,5 +1,4 @@
-/* components/main-page/main-page.css */
-/* Стили для главного интерфейса приложения, шапки шагов и сетки шаблонов в стиле Nobilia */
+/* components/main-page/main-page.css — Стили для главного интерфейса приложения, шапки шагов и сетки шаблонов в стиле Nobilia */
 
 .main-page-layout {
     display: flex;
@@ -33,13 +32,12 @@
     height: 100%;
 }
 
-
 .step-item {
     display: flex;
     align-items: center;
     justify-content: center; /* Центрируем текст и цифру внутри кнопки */
     gap: 8px;
-    width: 160px;          /* ЖЕСТКАЯ ФИКСИРОВАННАЯ ШИРИНА ШАГА — кнопки теперь одинаковые! */
+    width: 160px;            /* ЖЕСТКАЯ ФИКСИРОВАННАЯ ШИРИНА ШАГА — кнопки теперь строго одинаковые! */
     min-width: 160px;
     font-size: 13px;
     font-weight: 700;
@@ -47,9 +45,8 @@
     position: relative; 
     cursor: pointer;
     height: 100%; 
-    white-space: nowrap;   /* Запрещаем тексту переноситься на новую строку */
+    white-space: nowrap;     /* Запрещаем тексту переноситься на новую строку */
 }
-
 
 .step-item.active {
     color: #0f172a;
@@ -59,10 +56,10 @@
 .step-item.active::after {
     content: '';
     position: absolute;
-    bottom: -2px;  /* Положили ровно на нижнюю границу шапки */
-    left: 50%;     /* Сдвигаем на центр кнопки */
+    bottom: -2px;            /* Положили ровно на нижнюю границу шапки */
+    left: 50%;               /* Сдвигаем на центр кнопки */
     transform: translateX(-50%); /* Идеально центрируем назад по оси X */
-    width: 45px;   /* ЖЕСТКАЯ ФИКСИРОВАННАЯ ШИРИНА — больше не прыгает! */
+    width: 45px;             /* ЖЕСТКАЯ ФИКСИРОВАННАЯ ШИРИНА — больше не прыгает и не зависит от букв! */
     height: 4px;
     background: #cc0000;
     border-radius: 2px 2px 0 0; /* Скруглили верхние углы */
