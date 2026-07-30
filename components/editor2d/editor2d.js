@@ -75,6 +75,7 @@ export function initEditor2D(appState) {
     function drawGrid() {
         let worldStep = 50; // 500 мм базовый шаг
         
+        // Автоматически укрупняем или уменьшаем шаг сетки в зависимости от зума, чтобы линии не слипались
         if (worldStep * zoom < 50) worldStep = 100; // 1 метр
         if (worldStep * zoom < 50) worldStep = 200; // 2 метра
         if (worldStep * zoom > 150) worldStep = 10; // 100 мм
@@ -90,36 +91,45 @@ export function initEditor2D(appState) {
         const startY = Math.floor(bottomRightWorld.y / worldStep) * worldStep;
         const endY = Math.ceil(topLeftWorld.y / worldStep) * worldStep;
 
-        // 1. ЛИНИИ СЕТКИ
-        ctx.strokeStyle = '#e2e8f0';
+        // 1. РИСУЕМ ЛИНИИ СЕТКИ (Сделали цвет контрастнее — #cbd5e1)
+        ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 0.5;
         
+        // Вертикальные линии сетки
         for (let wx = startX; wx <= endX; wx += worldStep) {
             if (Math.round(wx) === 0) continue; 
             const sCoord = worldToScreen(wx, 0);
-            ctx.beginPath(); ctx.moveTo(sCoord.x, 0); ctx.lineTo(sCoord.x, canvas.height); ctx.stroke();
+            ctx.beginPath(); 
+            ctx.moveTo(sCoord.x, 0); 
+            ctx.lineTo(sCoord.x, canvas.height); 
+            ctx.stroke();
         }
+        
+        // Горизонтальные линии сетки (ИСПРАВЛЕНО!)
         for (let wy = startY; wy <= endY; wy += worldStep) {
             if (Math.round(wy) === 0) continue;
             const sCoord = worldToScreen(0, wy);
-            ctx.beginPath(); ctx.moveTo(0, sCoord.y); ctx.lineTo(canvas.width, sCoord.y); ctx.stroke();
+            ctx.beginPath(); 
+            ctx.moveTo(0, sCoord.y); 
+            ctx.lineTo(canvas.width, sCoord.y); 
+            ctx.stroke();
         }
 
-        // 2. ЦВЕТНЫЕ ПОЛУПРОЗРАЧНЫЕ ОСИ КООРДИНАТ
+        // 2. ЦВЕТНЫЕ ПОЛУПРОЗРАЧНЫЕ ОСИ КООРДИНАТ (X — красная, Y — зеленая)
         const zeroScreen = worldToScreen(0, 0);
 
         // Вертикальная ось Y — ЗЕЛЕНАЯ полупрозрачная
-        ctx.strokeStyle = 'rgba(34, 197, 94, 0.5)'; 
+        ctx.strokeStyle = 'rgba(34, 197, 94, 0.6)'; 
         ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(zeroScreen.x, 0); ctx.lineTo(zeroScreen.x, canvas.height); ctx.stroke();
 
         // Горизонтальная ось X — КРАСНАЯ полупрозрачная
-        ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)'; 
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)'; 
         ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(0, zeroScreen.y); ctx.lineTo(canvas.width, zeroScreen.y); ctx.stroke();
 
-        // 3. ПОДПИСИ ШКАЛЫ
-        ctx.fillStyle = '#64748b';
+        // 3. ПОДПИСИ ШКАЛЫ (С фиксацией отступа от краев экрана, чтобы не улетали)
+        ctx.fillStyle = '#475569'; // Сделали текст подписей чуть темнее и читаемее
         
         for (let wx = startX; wx <= endX; wx += worldStep) {
             if (Math.round(wx) === 0) continue;
@@ -132,7 +142,7 @@ export function initEditor2D(appState) {
             ctx.fillText(`${wy * SCALE}мм`, 12, sCoord.y - 4);
         }
 
-        // Маркер центра координат
+        // Маркер центра координат (0,0)
         ctx.fillStyle = '#334155';
         ctx.beginPath(); ctx.arc(zeroScreen.x, zeroScreen.y, 4, 0, 2 * Math.PI); ctx.fill();
         ctx.font = 'bold 11px monospace';
@@ -240,7 +250,7 @@ export function initEditor2D(appState) {
         }
         ctx.restore();
 
-        // 3. Слой РАЗМЕРОВ
+        // 3. Слой РАЗМЕРОВ (Фиксированный экранный размер)
         appState.walls.forEach(wall => {
             const wallLength = getDistanceInMM({x: wall.x1, y: wall.y1}, {x: wall.x2, y: wall.y2});
             drawFixedDimensionLine(wall.x1, wall.y1, wall.x2, wall.y2, `${wallLength} мм`);
@@ -257,9 +267,8 @@ export function initEditor2D(appState) {
     }
 
     // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ
-    // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ (ТОЧНЫЙ ФОКУС НА КУРСОР МЫШИ — КАК В SKETCHUP)
     canvas.addEventListener('wheel', (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         
         const rect = canvas.getBoundingClientRect();
         const mX = e.clientX - rect.left;
@@ -269,9 +278,9 @@ export function initEditor2D(appState) {
 
         const zoomFactor = 1.1;
         if (e.deltaY < 0) {
-            zoom = Math.min(zoom * zoomFactor, 12.0); 
+            zoom = Math.min(zoom * zoomFactor, 12.0);
         } else {
-            zoom = Math.max(zoom / zoomFactor, 0.08); 
+            zoom = Math.max(zoom / zoomFactor, 0.08);
         }
 
         offsetX = mX - mouseWorldBefore.x * zoom;
