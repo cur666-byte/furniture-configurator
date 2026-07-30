@@ -1,4 +1,4 @@
-/* components/editor2d/editor2d.js — Модуль управления 2D-редактором помещений. Отвечает за измерительную динамическую сетку, фиксированные выносы размеров, режим Орто (Shift) и точный зум с фокусом на курсор мыши. */
+/* components/editor2d/editor2d.js — Модуль управления 2D-редактором помещений. Отвечает за измерительную динамическую сетку, выделение нулевых осей, режим Орто (Shift), стрелочные размеры и навигацию по холсту. */
 
 export function initEditor2D(appState) {
     const canvas = document.getElementById('floorplan-canvas');
@@ -28,7 +28,7 @@ export function initEditor2D(appState) {
         if (e.key === 'Shift') { isShiftPressed = false; render(); }
     });
 
-    // ПЕРЕВОД КООРДИНАТ (Экран <-> Мир) - ИСПРАВЛЕНО
+    // ПЕРЕВОД КООРДИНАТ (Экран <-> Мир)
     function screenToWorld(screenX, screenY) {
         return {
             x: (screenX - offsetX) / zoom,
@@ -75,7 +75,6 @@ export function initEditor2D(appState) {
     function drawGrid() {
         let worldStep = 50; // 500 мм базовый шаг
         
-        // Автоматически укрупняем или уменьшаем шаг сетки в зависимости от зума, чтобы линии не слипались
         if (worldStep * zoom < 50) worldStep = 100; // 1 метр
         if (worldStep * zoom < 50) worldStep = 200; // 2 метра
         if (worldStep * zoom > 150) worldStep = 10; // 100 мм
@@ -91,7 +90,7 @@ export function initEditor2D(appState) {
         const startY = Math.floor(bottomRightWorld.y / worldStep) * worldStep;
         const endY = Math.ceil(topLeftWorld.y / worldStep) * worldStep;
 
-        // 1. РИСУЕМ ЛИНИИ СЕТКИ (Сделали цвет контрастнее — #e2e8f0)
+        // 1. ЛИНИИ СЕТКИ
         ctx.strokeStyle = '#e2e8f0';
         ctx.lineWidth = 0.5;
         
@@ -106,7 +105,7 @@ export function initEditor2D(appState) {
             ctx.beginPath(); ctx.moveTo(0, sCoord.y); ctx.lineTo(canvas.width, sCoord.y); ctx.stroke();
         }
 
-        // 2. ЦВЕТНЫЕ ПОЛУПРОЗРАЧНЫЕ ОСИ КООРДИНАТ (X — красная, Y — зеленая)
+        // 2. ЦВЕТНЫЕ ПОЛУПРОЗРАЧНЫЕ ОСИ КООРДИНАТ
         const zeroScreen = worldToScreen(0, 0);
 
         // Вертикальная ось Y — ЗЕЛЕНАЯ полупрозрачная
@@ -119,23 +118,21 @@ export function initEditor2D(appState) {
         ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(0, zeroScreen.y); ctx.lineTo(canvas.width, zeroScreen.y); ctx.stroke();
 
-        // 3. ПОДПИСИ ШКАЛЫ (С фиксацией отступа от краев экрана, чтобы не улетали)
+        // 3. ПОДПИСИ ШКАЛЫ
         ctx.fillStyle = '#64748b';
         
         for (let wx = startX; wx <= endX; wx += worldStep) {
             if (Math.round(wx) === 0) continue;
             const sCoord = worldToScreen(wx, 0);
-            // Линейка X всегда прижата к нижнему краю экрана
             ctx.fillText(`${wx * SCALE}мм`, sCoord.x + 4, canvas.height - 12);
         }
         for (let wy = startY; wy <= endY; wy += worldStep) {
             if (Math.round(wy) === 0) continue;
             const sCoord = worldToScreen(0, wy);
-            // ИСПРАВЛЕНО: Линейка Y теперь зафиксирована слева (всегда видна на 12px от края экрана)
             ctx.fillText(`${wy * SCALE}мм`, 12, sCoord.y - 4);
         }
 
-        // Маркер центра координат (0,0)
+        // Маркер центра координат
         ctx.fillStyle = '#334155';
         ctx.beginPath(); ctx.arc(zeroScreen.x, zeroScreen.y, 4, 0, 2 * Math.PI); ctx.fill();
         ctx.font = 'bold 11px monospace';
@@ -243,140 +240,136 @@ export function initEditor2D(appState) {
         }
         ctx.restore();
 
-        // 3. Слой РАЗМЕРОВ (Фиксированный экранный размер)
+        // 3. Слой РАЗМЕРОВ
         appState.walls.forEach(wall => {
             const wallLength = getDistanceInMM({x: wall.x1, y: wall.y1}, {x: wall.x2, y: wall.y2});
             drawFixedDimensionLine(wall.x1, wall.y1, wall.x2, wall.y2, `${wallLength} мм`);
         });
 
         if (currentPoints && currentTool === 'wall') {
-            if (currentPoints && currentTool === 'wall') {
-                const worldMouse = screenToWorld(mousePos.x, mousePos.y);
-                const adjustedMouse = getOrthoCoordinates(currentPoints, worldMouse);
-                const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
-                if (liveLen > 0) {
-                    drawFixedDimensionLine(currentPoints.x, currentPoints.y, adjustedMouse.x, adjustedMouse.y, `${liveLen} мм`);
-                }
+            const worldMouse = screenToWorld(mousePos.x, mousePos.y);
+            const adjustedMouse = getOrthoCoordinates(currentPoints, worldMouse);
+            const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
+            if (liveLen > 0) {
+                drawFixedDimensionLine(currentPoints.x, currentPoints.y, adjustedMouse.x, adjustedMouse.y, `${liveLen} мм`);
             }
         }
-    
-        // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ (ТОЧНЫЙ ФОКУС НА КУРСОР МЫШИ — КАК В SKETCHUP)
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault(); 
-            
-            // Берем позицию мыши относительно холста
-            const rect = canvas.getBoundingClientRect();
-            const mX = e.clientX - rect.left;
-            const mY = e.clientY - rect.top;
-    
-            // Находим мировую точку под курсором ДО изменения зума
-            const mouseWorldBefore = screenToWorld(mX, mY);
-    
-            const zoomFactor = 1.1;
-            if (e.deltaY < 0) {
-                zoom = Math.min(zoom * zoomFactor, 12.0); 
-            } else {
-                zoom = Math.max(zoom / zoomFactor, 0.08); 
-            }
-    
-            // Пересчитываем смещение offsetX/offsetY так, чтобы мировая точка осталась ровно под курсором мыши!
-            offsetX = mX - mouseWorldBefore.x * zoom;
-            offsetY = mY - mouseWorldBefore.y * zoom;
-    
-            render();
-        }, { passive: false });
-    
-        // ОБРАБОТЧИКИ НАЖАТИЯ МЫШИ
-        canvas.addEventListener('mousedown', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const screenX = e.clientX - rect.left;
-            const screenY = e.clientY - rect.top;
-    
-            if (e.button === 1) {
-                e.preventDefault();
-                isPanning = true;
-                canvas.style.cursor = 'grab';
-                startPan = { x: screenX - offsetX, y: screenY - offsetY };
-                return;
-            }
-    
-            if (e.button === 0 && currentTool === 'wall') {
-                const worldCoord = screenToWorld(screenX, screenY);
-    
-                if (!currentPoints) {
-                    currentPoints = { x: worldCoord.x, y: worldCoord.y };
-                } else {
-                    const finalPoint = getOrthoCoordinates(currentPoints, worldCoord);
-                    appState.walls.push({
-                        x1: currentPoints.x, y1: currentPoints.y,
-                        x2: finalPoint.x, y2: finalPoint.y
-                    });
-                    currentPoints = null;
-                    const infoText = document.getElementById('wall-len-info');
-                    if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">—</span>`;
-                }
-                render();
-            }
-        });
-    
-        // ДВИЖЕНИЕ МЫШИ
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const screenX = e.clientX - rect.left;
-            const screenY = e.clientY - rect.top;
-    
-            mousePos.x = screenX;
-            mousePos.y = screenY;
-    
-            if (isPanning) {
-                offsetX = screenX - startPan.x;
-                offsetY = screenY - startPan.y;
-                render();
-            } else if (currentPoints) {
-                render();
-            }
-        });
-    
-        window.addEventListener('mouseup', (e) => {
-            if (e.button === 1) {
-                isPanning = false;
-                canvas.style.cursor = currentTool === 'wall' ? 'crosshair' : 'default';
-            }
-        });
-    
-        canvas.addEventListener('contextmenu', e => { if(currentTool === 'wall') e.preventDefault(); });
-    
-        // Инструменты панели управления
-        const toolWall = document.getElementById('tool-wall');
-        const toolSelect = document.getElementById('tool-select');
-    
-        if (toolWall && toolSelect) {
-            toolWall.addEventListener('click', () => {
-                currentTool = 'wall';
-                toolWall.classList.add('active');
-                toolSelect.classList.remove('active');
-                canvas.style.cursor = 'crosshair';
-            });
-            toolSelect.addEventListener('click', () => {
-                currentTool = 'select';
-                toolSelect.classList.add('active');
-                toolWall.classList.remove('active');
-                canvas.style.cursor = 'default';
-                currentPoints = null;
-                render();
-            });
-        }
-    
-        const clearBtn = document.getElementById('btn-clear-canvas');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                appState.walls = [];
-                currentPoints = null;
-                render();
-            });
-        }
-    
-        window.addEventListener('resize', resize);
-        resize();
     }
+
+    // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ
+    // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ (ТОЧНЫЙ ФОКУС НА КУРСОР МЫШИ — КАК В SKETCHUP)
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault(); 
+        
+        const rect = canvas.getBoundingClientRect();
+        const mX = e.clientX - rect.left;
+        const mY = e.clientY - rect.top;
+
+        const mouseWorldBefore = screenToWorld(mX, mY);
+
+        const zoomFactor = 1.1;
+        if (e.deltaY < 0) {
+            zoom = Math.min(zoom * zoomFactor, 12.0); 
+        } else {
+            zoom = Math.max(zoom / zoomFactor, 0.08); 
+        }
+
+        offsetX = mX - mouseWorldBefore.x * zoom;
+        offsetY = mY - mouseWorldBefore.y * zoom;
+
+        render();
+    }, { passive: false });
+
+    // ОБРАБОТЧИКИ НАЖАТИЯ МЫШИ
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const screenX = e.clientX - rect.left;
+        const screenY = e.clientY - rect.top;
+
+        if (e.button === 1) {
+            e.preventDefault();
+            isPanning = true;
+            canvas.style.cursor = 'grab';
+            startPan = { x: screenX - offsetX, y: screenY - offsetY };
+            return;
+        }
+
+        if (e.button === 0 && currentTool === 'wall') {
+            const worldCoord = screenToWorld(screenX, screenY);
+
+            if (!currentPoints) {
+                currentPoints = { x: worldCoord.x, y: worldCoord.y };
+            } else {
+                const finalPoint = getOrthoCoordinates(currentPoints, worldCoord);
+                appState.walls.push({
+                    x1: currentPoints.x, y1: currentPoints.y,
+                    x2: finalPoint.x, y2: finalPoint.y
+                });
+                currentPoints = null;
+                const infoText = document.getElementById('wall-len-info');
+                if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">—</span>`;
+            }
+            render();
+        }
+    });
+
+    // ДВИЖЕНИЕ МЫШИ
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const screenX = e.clientX - rect.left;
+        const screenY = e.clientY - rect.top;
+
+        mousePos.x = screenX;
+        mousePos.y = screenY;
+
+        if (isPanning) {
+            offsetX = screenX - startPan.x;
+            offsetY = screenY - startPan.y;
+            render();
+        } else if (currentPoints) {
+            render();
+        }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+        if (e.button === 1) {
+            isPanning = false;
+            canvas.style.cursor = currentTool === 'wall' ? 'crosshair' : 'default';
+        }
+    });
+
+    canvas.addEventListener('contextmenu', e => { if(currentTool === 'wall') e.preventDefault(); });
+
+    // Инструменты панели управления
+    const toolWall = document.getElementById('tool-wall');
+    const toolSelect = document.getElementById('tool-select');
+
+    if (toolWall && toolSelect) {
+        toolWall.addEventListener('click', () => {
+            currentTool = 'wall';
+            toolWall.classList.add('active');
+            toolSelect.classList.remove('active');
+            canvas.style.cursor = 'crosshair';
+        });
+        toolSelect.addEventListener('click', () => {
+            currentTool = 'select';
+            toolSelect.classList.add('active');
+            toolWall.classList.remove('active');
+            canvas.style.cursor = 'default';
+            currentPoints = null;
+            render();
+        });
+    }
+
+    const clearBtn = document.getElementById('btn-clear-canvas');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            appState.walls = [];
+            currentPoints = null;
+            render();
+        });
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
 }
