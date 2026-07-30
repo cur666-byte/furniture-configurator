@@ -1,0 +1,22 @@
+.main-page-layout {
+    display: flex; flex-direction: column; width: 100vw; height: 100vh;
+}
+.main-header {
+    height: 60px; background: #ffffff; border-bottom: 1px solid #e2e8f0;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+}
+.logo { font-weight: 700; color: #0f172a; }
+.tabs-nav { display: flex; gap: 10px; }
+.nav-tab { padding: 8px 16px; border: none; background: transparent; cursor: pointer; font-size: 14px; border-radius: 6px; }
+.nav-tab.active { background: #e2e8f0; font-weight: 600; }
+.project-badge { font-size: 13px; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+.workspace-area { display: flex; flex: 1; }
+.nobilia-sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.nobilia-sidebar h3 { font-size: 12px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+.template-grid { display: flex; flex-direction: column; gap: 8px; }
+.tpl-btn { padding: 12px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 6px; cursor: pointer; text-align: left; font-size: 13px; font-weight: 500; }
+.tpl-btn:hover { background: #f1f5f9; }
+
+.editor-viewport { flex: 1; background: #f8fafc; display: flex; justify-content: center; align-items: center; }
+.empty-notice { color: #94a3b8; font-size: 14px; }

@@ -5,33 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Конструктор Мебели</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Подключаем стили модулей -->
+    <!-- Подключаем стили модулей изолированно -->
     <link rel="stylesheet" href="components/welcome/welcome.css">
-    <link rel="stylesheet" href="components/editor2d/editor2d.css">
+    <link rel="stylesheet" href="components/main-page/main-page.css">
 </head>
 <body>
 
-    <!-- Главная верхняя панель (постоянный интерфейс) -->
-    <header class="main-header">
-        <div class="logo">📐 FurnitureCAD</div>
-        <nav class="tabs-nav">
-            <button class="nav-tab active" data-target="editor2d" id="tab-2d">План комнаты (2D)</button>
-            <button class="nav-tab" data-target="editor3d" id="tab-3d" disabled>Конструктор (3D)</button>
-        </nav>
-        <div class="project-title-display" id="project-title">Новый проект</div>
-    </header>
+    <!-- Единый главный контейнер, куда JS по очереди зальет экраны -->
+    <div id="app-root"></div>
 
-    <!-- Основная рабочая область, где всегда живет редактор -->
-    <main class="app-viewport" id="app-viewport">
-        <!-- Сюда JS сразу загрузит 2D редактор, но поверх него покажется приветствие -->
-    </main>
-
-    <!-- Стартовое приветственное окно-анкета поверх всего сайта -->
-    <div class="welcome-overlay" id="welcome-overlay">
-        <!-- Сюда динамически подгрузится welcome.html -->
-    </div>
-
-    <!-- Главный управляющий скрипт -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
