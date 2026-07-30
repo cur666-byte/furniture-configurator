@@ -1,3 +1,5 @@
+/* components/main-page/main-page.js — Модуль Главной страницы проекта. Отвечает за рендеринг шапки шагов, сетки шаблонов в стиле Nobilia и переключение внутренних экранов. */
+
 import { initEditor2D } from '../editor2d/editor2d.js';
 
 export function initMainPage(appState) {
@@ -11,7 +13,6 @@ export function initMainPage(appState) {
                 <header class="main-header">
                     <div class="logo">📐 FurnitureCAD</div>
                     <nav class="steps-nav">
-                        <!-- Поменяли START на НАЧАЛО -->
                         <div class="step-item active" data-step="start">
                             <span class="step-num">🏠</span> НАЧАЛО
                         </div>
@@ -47,12 +48,10 @@ export function initMainPage(appState) {
         const contentArea = document.getElementById('dynamic-workspace-content');
         if (!contentArea) return;
 
-        // Проверяем, есть ли уже созданные стены в проекте
         const hasExistingWalls = appState.walls.length > 0;
 
         contentArea.innerHTML = `
             <div class="templates-section">
-                <!-- Кнопка "Продолжить", если проект уже начат -->
                 ${hasExistingWalls ? `
                     <div class="continue-project-box">
                         <button id="btn-continue-project" class="continue-action-btn">
@@ -63,12 +62,11 @@ export function initMainPage(appState) {
 
                 <div class="section-title-bar">
                     <button class="plus-btn">+</button>
-                    <!-- Поменяли заголовок текста -->
                     <span>Выберите шаблон помещения</span>
                 </div>
                 
                 <div class="nobilia-grid">
-                    <!-- ПОМЕНЯЛИ МЕСТАМИ: 1. Свободное планирование -->
+                    <!-- 1. Свободное планирование -->
                     <div class="nobilia-card" data-template="free">
                         <div class="card-preview-box">
                             <svg viewBox="0 0 100 100" class="shape-svg">
@@ -79,7 +77,7 @@ export function initMainPage(appState) {
                         <div class="card-label">Свободное планирование помещения</div>
                     </div>
 
-                    <!-- ПОМЕНЯЛИ МЕСТАМИ: 2. Прямоугольник -->
+                    <!-- 2. Прямоугольник -->
                     <div class="nobilia-card" data-template="rectangle">
                         <div class="card-preview-box">
                             <svg viewBox="0 0 100 100" class="shape-svg"><rect x="25" y="25" width="50" height="50" rx="2" /></svg>
@@ -112,54 +110,37 @@ export function initMainPage(appState) {
         document.querySelectorAll('.nobilia-card').forEach(card => {
             card.addEventListener('click', () => {
                 const newTemplate = card.getAttribute('data-template');
-                
-                // Если пользователь выбирает НОВЫЙ шаблон, мы полностью очищаем старые стены
                 appState.template = newTemplate;
-                appState.walls = []; 
+                appState.walls = []; // Сбрасываем старые стены при выборе нового шаблона
 
                 updateHeaderTabsVisual('room');
                 loadEditorInterface();
             });
         });
 
-        // Оживляем кнопку продолжения проекта (если она отрендерилась)
+        // Оживляем кнопку продолжения проекта
         const continueBtn = document.getElementById('btn-continue-project');
         if (continueBtn) {
             continueBtn.addEventListener('click', () => {
                 updateHeaderTabsVisual('room');
-                loadEditorInterface(); // Просто возвращаем на холст без затирания стен
+                loadEditorInterface();
             });
         }
     }
 
-    // Функция загрузки 2D-редактора стен
+    // 3. Функция загрузки 2D-редактора стен (ИСПРАВЛЕНО: Чистый fetch разметки из родного editor2d.html)
     function loadEditorInterface() {
         const contentArea = document.getElementById('dynamic-workspace-content');
         if (!contentArea) return;
 
-        contentArea.innerHTML = `
-            <div class="editor-2d-container">
-                <aside class="editor-sidebar">
-                    <h3>Инструменты 2D</h3>
-                    <div class="tool-section">
-                        <button class="tool-btn active" id="tool-wall">🧱 Рисовать стены</button>
-                        <button class="tool-btn" id="tool-select">🎯 Режим осмотра</button>
-                    </div>
-                    <div class="info-section">
-                        <h4>Параметры комнаты</h4>
-                        <p>Высота потолка: <span class="highlight">2700 мм</span></p>
-                        <p>Толщина стен: <span class="highlight">200 мм</span></p>
-                        <p id="wall-len-info">Длина стены: <span class="highlight">—</span></p>
-                    </div>
-                    <button class="clear-btn" id="btn-clear-canvas">🗑️ Очистить всё</button>
-                    <button class="next-step-btn" id="btn-to-3d">Готово, в 3D →</button>
-                </aside>
-                <div class="canvas-wrapper">
-                    <canvas id="floorplan-canvas"></canvas>
-                </div>
-            </div>
-        `;
-        initEditor2D(appState);
+        // Скачиваем разметку из родного изолированного файла 2D-редактора
+        fetch('components/editor2d/editor2d.html')
+            .then(response => response.text())
+            .then(html => {
+                contentArea.innerHTML = html; // Вставляем разметку во фрейм рабочего пространства
+                initEditor2D(appState);       // Инициализируем логику черчения из editor2d.js
+            })
+            .catch(err => console.error('Ошибка загрузки 2D-интерфейса:', err));
     }
 
     // Функция обновления визуального стиля вкладок в шапке
@@ -173,7 +154,7 @@ export function initMainPage(appState) {
         });
     }
 
-    // Функция оживления кликов по верхним вкладкам
+    // Навешиваем клики на постоянные кнопки шапки
     function bindHeaderTabs() {
         document.querySelectorAll('.step-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -181,10 +162,10 @@ export function initMainPage(appState) {
 
                 if (targetStep === 'start') {
                     updateHeaderTabsVisual('start');
-                    loadStartScreen(); // Возвращает меню карточек (+ кнопку продолжить)
+                    loadStartScreen(); 
                 } else if (targetStep === 'room') {
                     updateHeaderTabsVisual('room');
-                    loadEditorInterface(); // Возвращает на холст
+                    loadEditorInterface(); 
                 } else if (targetStep === 'furniture') {
                     updateHeaderTabsVisual('furniture');
                     const contentArea = document.getElementById('dynamic-workspace-content');

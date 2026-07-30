@@ -1,6 +1,6 @@
-<!-- components/editor2d/editor2d.html — Разметка интерфейса 2D-планировщика помещений. Содержит обновленные инструменты ("Карандаш", "Прямоугольник") и информационную панель параметров. -->
+<!-- components/editor2d/editor2d.html -->
 <div class="editor-2d-container">
-    <!-- Левая панель управления -->
+    <!-- Левая панель инструментов 2D-черчения -->
     <aside class="editor-sidebar">
         <h3>Инструменты 2D</h3>
         <div class="tool-section">
@@ -16,7 +16,7 @@
             </div>
             <div class="param-row">
                 <label>Толщина (см):</label>
-                <input type="number" id="info-thickness" value="200" disabled>
+                <input type="number" id="info-thickness" value="20" disabled>
             </div>
             <p id="wall-len-info">Длина: <span class="highlight">—</span></p>
         </div>
@@ -30,7 +30,7 @@
         <button class="next-step-btn" id="btn-to-3d">Готово, в 3D →</button>
     </aside>
 
-    <!-- Обертка холста чертежа -->
+    <!-- Область интерактивного холста Canvas -->
     <div class="canvas-wrapper">
         <canvas id="floorplan-canvas"></canvas>
     </div>
