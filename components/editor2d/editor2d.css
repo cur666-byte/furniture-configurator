@@ -1,14 +1,14 @@
-/* components/editor2d/editor2d.css — Модуль 2D-редактора. Управляет холстом Canvas, размерной сеткой и логикой интерактивного черчения стен. */
+/* components/editor2d/editor2d.css — Стили для 2D-редактора. Обеспечивают фиксированное размещение элементов без давления на верхнюю шапку сайта. */
 
 .editor-2d-container {
     display: flex;
     width: 100%;
     height: 100%;
-    max-height: calc(100vh - 70px); /* Вычитаем точную высоту шапки, чтобы редактор не давил на неё */
     gap: 20px;
     box-sizing: border-box;
 }
 
+/* Левое меню инструментов */
 .editor-sidebar {
     width: 240px;
     background: #ffffff;
@@ -19,6 +19,7 @@
     flex-direction: column;
     gap: 20px;
     box-sizing: border-box;
+    flex-shrink: 0; /* Меню никогда не сжимается */
 }
 
 .editor-sidebar h3 {
@@ -44,6 +45,7 @@
     font-size: 13px;
     font-weight: 600;
     text-align: left;
+    transition: all 0.2s;
 }
 
 .tool-btn.active {
@@ -70,6 +72,23 @@
     color: #cc0000;
 }
 
+.hint-section {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+    background: #f1f5f9;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.hint-section .badge {
+    background: #cbd5e1;
+    color: #0f172a;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
 .clear-btn {
     padding: 10px;
     background: transparent;
@@ -93,18 +112,24 @@
     font-size: 13px;
 }
 
+/* Безопасная изолированная обертка для чертежа */
 .canvas-wrapper {
     flex: 1;
     height: 100%;
-    overflow: hidden; /* Запрещаем холсту ломать размеры контейнера */
+    position: relative; /* Создаем контекст для абсолютного позиционирования холста */
+    overflow: hidden;
 }
 
+/* Холст вывешен на абсолютные координаты — он больше физически не может "выталкивать" верстку шапки! */
 #floorplan-canvas {
-    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     cursor: crosshair;
+    display: block;
 }
