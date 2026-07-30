@@ -202,23 +202,24 @@ export function initEditor2D(appState) {
         return Math.round(Math.sqrt(dx * dx + dy * dy) * SCALE);
     }
 
-    // ГЛАВНЫЙ РЕНДЕР
+    // ГЛАВНЫЙ РЕНДЕР ХОЛСТА (СИНХРОНИЗИРОВАННЫЙ С КУРСОРНЫМ ЗУМОМ)
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // 1. Рисуем сетку
+        // 1. Слой 1: Рисуем измерительную динамическую сетку и оси
         drawGrid();
 
-        // 2. Слой стен (Мировые координаты)
+        // 2. Слой 2: Отрисовка самих стен в МИРОВЫХ координатах (ИСПРАВЛЕНО ЗЕРКАЛО!)
         ctx.save();
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(zoom, zoom);
+        ctx.translate(offsetX, offsetY); // Смещаем холст в точку (0,0)
+        ctx.scale(zoom, -zoom);          // Инвертируем Y (минус zoom), чтобы стены рисовались ВВЕРХ, а не улетали вниз!
 
         ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 12 / zoom; 
+        ctx.lineWidth = 12 / zoom; // Толщина адаптируется под зум
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
+        // Рисуем готовые стены из базы данных
         appState.walls.forEach(wall => {
             ctx.beginPath();
             ctx.moveTo(wall.x1, wall.y1);
@@ -226,6 +227,7 @@ export function initEditor2D(appState) {
             ctx.stroke();
         });
 
+        // Рисуем синюю линию в процессе черчения прямо сейчас
         if (currentPoints && currentTool === 'wall') {
             const worldMouse = screenToWorld(mousePos.x, mousePos.y);
             const adjustedMouse = getOrthoCoordinates(currentPoints, worldMouse);
@@ -237,18 +239,20 @@ export function initEditor2D(appState) {
             ctx.lineTo(adjustedMouse.x, adjustedMouse.y);
             ctx.stroke();
 
+            // Live-вывод длины текущей стены в левую панель параметров
             const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
             const infoText = document.getElementById('wall-len-info');
             if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">${liveLen} мм</span>`;
         }
         ctx.restore();
 
-        // 3. Слой РАЗМЕРОВ (Фиксированный экранный размер)
+        // 3. Слой 3: Отрисовка СТРЕЛОК РАЗМЕРОВ (Фиксированный экранный размер поверх стен)
         appState.walls.forEach(wall => {
             const wallLength = getDistanceInMM({x: wall.x1, y: wall.y1}, {x: wall.x2, y: wall.y2});
             drawFixedDimensionLine(wall.x1, wall.y1, wall.x2, wall.y2, `${wallLength} мм`);
         });
 
+        // Живой размер для строящейся линии
         if (currentPoints && currentTool === 'wall') {
             const worldMouse = screenToWorld(mousePos.x, mousePos.y);
             const adjustedMouse = getOrthoCoordinates(currentPoints, worldMouse);
@@ -258,6 +262,7 @@ export function initEditor2D(appState) {
             }
         }
     }
+
 
     // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ
     canvas.addEventListener('wheel', (e) => {
