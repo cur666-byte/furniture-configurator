@@ -1,8 +1,3 @@
-// Импортируем HTML-код как чистые текстовые строки (флаг ?raw)
-import welcomeHTML from './components/welcome/welcome.html?raw';
-import mainPageHTML from './components/main-page/main-page.html?raw';
-
-// Импортируем логику инициализации скриптов
 import { initWelcome } from './components/welcome/welcome.js';
 import { initMainPage } from './components/main-page/main-page.js';
 
@@ -20,20 +15,15 @@ const mainPageContainer = document.getElementById('main-page-step');
 function startApp() {
     if (!welcomeContainer || !mainPageContainer) return;
 
-    // 1. Вставляем разметку приветствия из родного файла и запускаем скрипт
-    welcomeContainer.innerHTML = welcomeHTML;
-    
+    // 1. Запускаем окно приветствия (оно само отрисует себя изнутри)
     initWelcome(appState, () => {
-        // Логика, которая сработает ПОСЛЕ создания проекта:
+        // Логика, которая сработает ПОСЛЕ заполнения анкеты:
         
-        // Переносим разметку главной страницы из её файла в контейнер
-        mainPageContainer.innerHTML = mainPageHTML;
-        
-        // Скрываем приветствие, показываем рабочую зону
+        // Скрываем оверлей приветствия, показываем блок главной страницы
         welcomeContainer.classList.add('hidden');
         mainPageContainer.classList.remove('hidden');
         
-        // Активируем логику главной страницы и сетки карточек
+        // 2. Инициализируем главную страницу
         initMainPage(appState);
     });
 }
