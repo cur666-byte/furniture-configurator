@@ -373,53 +373,69 @@ export function initEditor2D(appState) {
         if (currentTool === 'pencil') e.preventDefault();
 
     });
-    // Кнопки инструментов
-    const toolPencil = document.getElementById('tool-pencil');
-    const toolRectShape = document.getElementById('tool-rect-shape');
-
-    if (toolPencil && toolRectShape) {
-
-        toolPencil.addEventListener('click', () => {
-            if (isRoomClosed) return; currentTool = 'pencil';
-            toolPencil.classList.add('active');
-            toolRectShape.classList.remove('active');
-            canvas.style.cursor = 'crosshair';
-            currentPoints = null; render();
-        });
-        toolRectShape.addEventListener('click', () => {
-            if (isRoomClosed) return;
-            currentTool = 'rectangle';
-            toolRectShape.classList.add('active');
-            toolPencil.classList.remove('active');
-            canvas.style.cursor = 'cell';
-            currentPoints = null;
-            render();
-        });
-    }
-
-    // Кнопка очистки — СБРОС И ПОЛНАЯ РАЗБЛОКИРОВКА МЕНЮ
-    const clearBtn = document.getElementById('btn-clear-canvas');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            appState.walls = [];
-            currentPoints = null;
-            inputBuffer = "";
-            isRoomClosed = false;
-
-            // Возвращаем кнопкам активность напрямую
-            if (toolPencil) toolPencil.disabled = false;
-            if (toolRectShape) toolRectShape.disabled = false;
-
-            // Возвращаем карандаш как дефолтный инструмент после сброса
-            currentTool = 'pencil';
-            if (toolPencil) toolPencil.classList.add('active');
-            if (toolRectShape) toolRectShape.classList.remove('active');
-
-            checkRoomClosure();
-            render();
-        });
-    }
-
-    window.addEventListener('resize', resize);
-    resize();
-}
+     // Управление кнопками инструментов панели с очисткой незавершённых линий
+     const toolPencil = document.getElementById('tool-pencil');
+     const toolRectShape = document.getElementById('tool-rect-shape');
+ 
+     if (toolPencil && toolRectShape) {
+         toolPencil.addEventListener('click', () => {
+             if (isRoomClosed) return;
+             currentTool = 'pencil';
+             toolPencil.classList.add('active'); 
+             toolRectShape.classList.remove('active');
+             canvas.style.cursor = 'crosshair';
+             
+             // ТОЧЕЧНАЯ ПРАВКА: Сбрасываем недорисованную линию при смене инструмента
+             currentPoints = null; 
+             inputBuffer = "";
+             render();
+         });
+ 
+         toolRectShape.addEventListener('click', () => {
+             if (isRoomClosed) return;
+             currentTool = 'rectangle';
+             toolRectShape.classList.add('active'); 
+             toolPencil.classList.remove('active');
+             canvas.style.cursor = 'cell';
+             
+             // ТОЧЕЧНАЯ ПРАВКА: Сбрасываем недорисованную линию при смене инструмента
+             currentPoints = null; 
+             inputBuffer = "";
+             render();
+         });
+     }
+ 
+     // Кнопка очистки — СБРОС И ПОЛНАЯ РАЗБЛОКИРОВКА МЕНЮ С СОХРАНЕНИЕМ ТЕКУЩЕГО ИНСТРУМЕНТА
+     const clearBtn = document.getElementById('btn-clear-canvas');
+     if (clearBtn) {
+         clearBtn.addEventListener('click', () => {
+             appState.walls = []; 
+             currentPoints = null; 
+             inputBuffer = "";
+             isRoomClosed = false;
+             
+             // Разблокируем кнопки в меню
+             if (toolPencil) toolPencil.disabled = false;
+             if (toolRectShape) toolRectShape.disabled = false;
+             
+             // ТОЧЕЧНАЯ ПРАВКА ПАМЯТИ: сохраняем текущий инструмент и обновляем подсветку
+             if (currentTool === 'pencil') {
+                 if (toolPencil) toolPencil.classList.add('active');
+                 if (toolRectShape) toolRectShape.classList.remove('active');
+                 canvas.style.cursor = 'crosshair';
+             } else if (currentTool === 'rectangle') {
+                 if (toolRectShape) toolRectShape.classList.add('active');
+                 if (toolPencil) toolPencil.classList.remove('active');
+                 canvas.style.cursor = 'cell';
+             }
+             
+             checkRoomClosure(); 
+             render();
+         });
+     }
+ 
+     // ВОТ ОНИ! Добавляем потерянные три строчки инициализации размеров окна и закрываем функцию модуля
+     window.addEventListener('resize', resize);
+     resize();
+ }
+ 
