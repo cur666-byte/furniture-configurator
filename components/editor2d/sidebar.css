@@ -1,0 +1,107 @@
+/* components/editor2d/sidebar.css — Стили левой панели инструментов 2D-редактора. Управляют кнопками, блоками параметров и подсказок. */
+
+.editor-sidebar {
+    width: 240px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.editor-sidebar h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+}
+
+.tool-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tool-btn {
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.tool-btn.active {
+    background: #0071e3;
+    color: white;
+    border-color: #0071e3;
+}
+
+.info-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-section h4 { 
+    font-weight: 700; 
+    color: #475569; 
+}
+
+.info-section .highlight {
+    font-weight: 700;
+    color: #cc0000;
+}
+
+.hint-section {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+    background: #f1f5f9;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.hint-section .badge {
+    background: #cbd5e1;
+    color: #0f172a;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.clear-btn {
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.next-step-btn {
+    margin-top: auto;
+    padding: 12px;
+    background: #cc0000;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+}

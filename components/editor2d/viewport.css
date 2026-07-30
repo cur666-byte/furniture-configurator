@@ -1,0 +1,21 @@
+/* components/editor2d/viewport.css — Стили правого видового окна и холста Canvas. Отвечают за изоляцию чертежа и стабильность верхней шапки сайта. */
+
+.canvas-wrapper {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+#floorplan-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: crosshair;
+    display: block;
+}
