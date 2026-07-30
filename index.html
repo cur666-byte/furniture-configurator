@@ -10,38 +10,11 @@
 </head>
 <body>
 
-    <!-- 1. ОКНО ПРИВЕТСТВИЯ (Изначально пустое, код вставит JS) -->
+    <!-- 1. ЗОНА ДЛЯ ОКНА ПРИВЕТСТВИЯ -->
     <div class="welcome-overlay" id="welcome-step"></div>
 
-
-
-    <!-- 2. ГЛАВНАЯ СТРАНИЦА (Изначально скрыта классом hidden) -->
-    <div id="main-page-step" class="hidden">
-        <!-- Сюда вставляем чистую разметку из main-page.html -->
-        <div class="main-page-layout">
-            <header class="main-header">
-                <div class="logo">📐 FurnitureCAD</div>
-                <nav class="tabs-nav">
-                    <button class="nav-tab active" data-tab="2d">1. План (2D)</button>
-                    <button class="nav-tab" data-tab="3d">2. Конструктор (3D)</button>
-                </nav>
-                <div class="project-badge" id="main-project-name">Проект</div>
-            </header>
-            <div class="workspace-area">
-                <aside class="nobilia-sidebar">
-                    <h3>Шаблоны комнат</h3>
-                    <div class="template-grid">
-                        <button class="tpl-btn">Прямоугольник</button>
-                        <button class="tpl-btn">Г-образная</button>
-                        <button class="tpl-btn">Свободная форма</button>
-                    </div>
-                </aside>
-                <main class="editor-viewport" id="editor-viewport">
-                    <div class="empty-notice">Здесь будет разворачиваться выбранный редактор</div>
-                </main>
-            </div>
-        </div>
-    </div>
+    <!-- 2. ЗОНА ДЛЯ ГЛАВНОЙ СТРАНИЦЫ -->
+    <div id="main-page-step"></div>
 
     <script type="module" src="app.js"></script>
 </body>

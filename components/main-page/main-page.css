@@ -1,22 +1,200 @@
 .main-page-layout {
-    display: flex; flex-direction: column; width: 100vw; height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ffffff;
 }
+
+/* Верхняя статус-панель шагов */
 .main-header {
-    height: 60px; background: #ffffff; border-bottom: 1px solid #e2e8f0;
-    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+    height: 70px;
+    background: #ffffff;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
 }
-.logo { font-weight: 700; color: #0f172a; }
-.tabs-nav { display: flex; gap: 10px; }
-.nav-tab { padding: 8px 16px; border: none; background: transparent; cursor: pointer; font-size: 14px; border-radius: 6px; }
-.nav-tab.active { background: #e2e8f0; font-weight: 600; }
-.project-badge { font-size: 13px; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
 
-.workspace-area { display: flex; flex: 1; }
-.nobilia-sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.nobilia-sidebar h3 { font-size: 12px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
-.template-grid { display: flex; flex-direction: column; gap: 8px; }
-.tpl-btn { padding: 12px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 6px; cursor: pointer; text-align: left; font-size: 13px; font-weight: 500; }
-.tpl-btn:hover { background: #f1f5f9; }
+.logo {
+    font-weight: 800;
+    font-size: 20px;
+    color: #cc0000; /* Красный фирменный акцент под Nobilia */
+    letter-spacing: -0.5px;
+}
 
-.editor-viewport { flex: 1; background: #f8fafc; display: flex; justify-content: center; align-items: center; }
-.empty-notice { color: #94a3b8; font-size: 14px; }
+.steps-nav {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.step-item.active {
+    color: #0f172a;
+    position: relative;
+}
+
+/* Красная подложка-стрелка под активным пунктом СТАРТ */
+.step-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #cc0000;
+}
+
+.step-num {
+    background: #e2e8f0;
+    color: #475569;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 11px;
+}
+
+.step-item.active .step-num {
+    background: #cc0000;
+    color: #ffffff;
+}
+
+.step-arrow {
+    width: 10px;
+    height: 10px;
+    border-top: 2px solid #cbd5e1;
+    border-right: 2px solid #cbd5e1;
+    transform: rotate(45deg);
+    margin: 0 10px;
+}
+
+.project-badge {
+    font-size: 13px;
+    background: #f8fafc;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    font-weight: 600;
+}
+
+/* Рабочая область выбора */
+.workspace-area {
+    flex: 1;
+    background-color: #f1f5f9;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.templates-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.section-title-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #94a3b8;
+    color: white;
+    padding: 8px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.plus-btn {
+    background: #cc0000;
+    border: none;
+    color: white;
+    width: 20px;
+    height: 20px;
+    font-weight: bold;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+/* Сетка карточек */
+.nobilia-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 15px;
+    width: 100%;
+}
+
+.nobilia-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s;
+}
+
+.nobilia-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.card-preview-box {
+    height: 180px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Иконки-индикаторы в углу (красные кружки с человечками) */
+.badge-alert {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #cc0000;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.shape-svg {
+    width: 90px;
+    height: 90px;
+    stroke: #334155;
+    stroke-width: 2;
+    fill: none;
+}
+
+.card-label {
+    background: #cbd5e1;
+    color: #334155;
+    padding: 10px 15px;
+    font-size: 12px;
+    font-weight: 600;
+    border-top: 1px solid #cbd5e1;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+}
