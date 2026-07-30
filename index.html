@@ -3,54 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор корпусной мебели</title>
+    <title>3D Конструктор Мебели</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Подключаем стили модулей -->
+    <link rel="stylesheet" href="components/welcome/welcome.css">
+    <link rel="stylesheet" href="components/editor2d/editor2d.css">
 </head>
 <body>
 
-    <div class="app-container">
-        <!-- Панель управления параметрами (слева) -->
-        <aside class="sidebar">
-            <h2>Параметры шкафа</h2>
-            
-            <div class="control-group">
-                <label for="width">Ширина (мм):</label>
-                <input type="number" id="width" value="1200" min="400" max="2500">
-            </div>
+    <!-- Главная верхняя панель (навигация по вкладкам) -->
+    <header class="main-header">
+        <div class="logo">📐 FurnitureCAD</div>
+        <nav class="tabs-nav">
+            <button class="nav-tab active" data-target="welcome">1. Приветствие</button>
+            <button class="nav-tab" data-target="editor2d" id="tab-2d" disabled>2. План комнаты (2D)</button>
+            <button class="nav-tab" data-target="editor3d" id="tab-3d" disabled>3. Конструктор (3D)</button>
+        </nav>
+        <div class="project-title-display" id="project-title">Новый проект</div>
+    </header>
 
-            <div class="control-group">
-                <label for="height">Высота (мм):</label>
-                <input type="number" id="height" value="2000" min="1000" max="2700">
-            </div>
+    <!-- Основной контейнер приложения, куда динамически подгружаются экраны -->
+    <main class="app-viewport" id="app-viewport">
+        <!-- Сюда JS загрузит интерфейс приветствия при старте -->
+    </main>
 
-            <div class="control-group">
-                <label for="depth">Глубина (мм):</label>
-                <input type="number" id="depth" value="600" min="300" max="900">
-            </div>
-
-            <div class="control-group">
-                <label for="material">Материал ЛДСП:</label>
-                <select id="material">
-                    <option value="oak">Дуб Сонома</option>
-                    <option value="wenge">Венге</option>
-                    <option value="white">Белый базовый</option>
-                </select>
-            </div>
-
-            <button id="calculate-btn">Рассчитать стоимость</button>
-            <div id="result-price">Стоимость: 0 ₽</div>
-        </aside>
-
-        <!-- Область просмотра (справа) -->
-        <main class="viewer-area">
-            <div id="canvas-placeholder">
-                <p>Здесь будет 3D-модель шкафа</p>
-                <!-- Сюда мы позже выведем графику -->
-                <div id="furniture-preview"></div>
-            </div>
-        </main>
-    </div>
-
-    <script src="script.js"></script>
+    <!-- Главный управляющий скрипт -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>

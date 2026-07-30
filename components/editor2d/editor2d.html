@@ -1,0 +1,24 @@
+<div class="editor-container">
+    <!-- Боковая панель 2D-редактора -->
+    <aside class="editor-sidebar">
+        <h3>Инструменты 2D</h3>
+        
+        <div class="tool-section">
+            <button class="tool-btn active" id="tool-wall">🧱 Рисовать стены</button>
+            <button class="tool-btn" id="tool-select" disabled>🎯 Выделение</button>
+        </div>
+
+        <div class="info-section">
+            <h4>Параметры проекта</h4>
+            <p>Высота стен: <span id="info-height">2700</span> мм</p>
+            <p>Толщина: <span id="info-thickness">200</span> мм</p>
+        </div>
+
+        <button class="clear-btn" id="btn-clear-canvas">🗑️ Очистить всё</button>
+    </aside>
+
+    <!-- Область интерактивного чертежа -->
+    <div class="canvas-wrapper">
+        <canvas id="floorplan-canvas"></canvas>
+    </div>
+</div>
