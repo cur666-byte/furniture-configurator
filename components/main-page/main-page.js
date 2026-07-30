@@ -28,7 +28,7 @@ export function initMainPage(appState) {
             // Вставляем разметку полноценного 2D-редактора
             workspaceArea.innerHTML = `
                 <div class="editor-2d-container">
-                    <!-- Боковая панель инструментов (как у аналогов) -->
+                    <!-- Боковая панель инструментов -->
                     <aside class="editor-sidebar">
                         <h3>Инструменты 2D</h3>
                         <div class="tool-section">
