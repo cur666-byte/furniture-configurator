@@ -32,14 +32,14 @@ export function initEditor2D(appState) {
     function screenToWorld(screenX, screenY) {
         return {
             x: (screenX - offsetX) / zoom,
-            y: (screenY - offsetY) / zoom
+            y: (offsetY - screenY) / zoom // Инверсия Y, чтобы ось шла снизу вверх
         };
     }
 
     function worldToScreen(worldX, worldY) {
         return {
             x: worldX * zoom + offsetX,
-            y: worldY * zoom + offsetY
+            y: offsetY - worldY * zoom // Инверсия Y для корректного экранного вывода
         };
     }
 
@@ -75,47 +75,53 @@ export function initEditor2D(appState) {
     function drawGrid() {
         let worldStep = 50; // 500 мм базовый шаг
         
-        // Автоматически укрупняем или уменьшаем шаг сетки в зависимости от зума, чтобы линии не слипались
+        // Автоматически укрупняем или уменьшаем шаг сетки в зависимости от зума
         if (worldStep * zoom < 50) worldStep = 100; // 1 метр
         if (worldStep * zoom < 50) worldStep = 200; // 2 метра
         if (worldStep * zoom > 150) worldStep = 10; // 100 мм
 
+        const step = worldStep * zoom; // Шаг сетки в пикселях на экране
+
         ctx.save();
         ctx.font = '10px monospace';
 
-        const topLeftWorld = screenToWorld(0, 0);
-        const bottomRightWorld = screenToWorld(canvas.width, canvas.height);
-
-        const startX = Math.floor(topLeftWorld.x / worldStep) * worldStep;
-        const endX = Math.ceil(bottomRightWorld.x / worldStep) * worldStep;
-        const startY = Math.floor(bottomRightWorld.y / worldStep) * worldStep;
-        const endY = Math.ceil(topLeftWorld.y / worldStep) * worldStep;
-
-        // 1. РИСУЕМ ЛИНИИ СЕТКИ (Сделали цвет контрастнее — #cbd5e1)
+        // 1. РИСУЕМ ВЕРТИКАЛЬНЫЕ ЛИНИИ СЕТКИ (Ось X)
         ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 0.5;
-        
-        // Вертикальные линии сетки
-        for (let wx = startX; wx <= endX; wx += worldStep) {
-            if (Math.round(wx) === 0) continue; 
-            const sCoord = worldToScreen(wx, 0);
-            ctx.beginPath(); 
-            ctx.moveTo(sCoord.x, 0); 
-            ctx.lineTo(sCoord.x, canvas.height); 
+
+        // Находим стартовую линию слева от экрана и чертим вправо до конца холста
+        const startX = offsetX % step;
+        for (let x = startX; x < canvas.width; x += step) {
+            const worldCoord = screenToWorld(x, 0);
+            if (Math.round(worldCoord.x) === 0) continue; // Пропускаем нулевую ось Y
+
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
             ctx.stroke();
-        }
-        
-        // Горизонтальные линии сетки (ИСПРАВЛЕНО!)
-        for (let wy = startY; wy <= endY; wy += worldStep) {
-            if (Math.round(wy) === 0) continue;
-            const sCoord = worldToScreen(0, wy);
-            ctx.beginPath(); 
-            ctx.moveTo(0, sCoord.y); 
-            ctx.lineTo(canvas.width, sCoord.y); 
-            ctx.stroke();
+
+            // Подписи миллиметров шкалы X (всегда прижаты к низу экрана)
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(`${Math.round(worldCoord.x) * SCALE}мм`, x + 4, canvas.height - 12);
         }
 
-        // 2. ЦВЕТНЫЕ ПОЛУПРОЗРАЧНЫЕ ОСИ КООРДИНАТ (X — красная, Y — зеленая)
+        // 2. РИСУЕМ ГОРИЗОНТАЛЬНЫЕ ЛИНИИ СЕТКИ (Ось Y) — НАМЕРТВО ИСПРАВЛЕНО
+        const startY = offsetY % step;
+        for (let y = startY; y < canvas.height; y += step) {
+            const worldCoord = screenToWorld(0, y);
+            if (Math.round(worldCoord.y) === 0) continue; // Пропускаем нулевую ось X
+
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+
+            // Подписи миллиметров шкалы Y (всегда зафиксированы слева на 12 пикселей)
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(`${Math.round(worldCoord.y) * SCALE}мм`, 12, y - 4);
+        }
+
+        // 3. ЦВЕТНЫЕ ПОЛУПРОЗРАЧНЫЕ ОСИ КООРДИНАТ (X — красная, Y — зеленая)
         const zeroScreen = worldToScreen(0, 0);
 
         // Вертикальная ось Y — ЗЕЛЕНАЯ полупрозрачная
@@ -128,20 +134,6 @@ export function initEditor2D(appState) {
         ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(0, zeroScreen.y); ctx.lineTo(canvas.width, zeroScreen.y); ctx.stroke();
 
-        // 3. ПОДПИСИ ШКАЛЫ (С фиксацией отступа от краев экрана, чтобы не улетали)
-        ctx.fillStyle = '#475569'; // Сделали текст подписей чуть темнее и читаемее
-        
-        for (let wx = startX; wx <= endX; wx += worldStep) {
-            if (Math.round(wx) === 0) continue;
-            const sCoord = worldToScreen(wx, 0);
-            ctx.fillText(`${wx * SCALE}мм`, sCoord.x + 4, canvas.height - 12);
-        }
-        for (let wy = startY; wy <= endY; wy += worldStep) {
-            if (Math.round(wy) === 0) continue;
-            const sCoord = worldToScreen(0, wy);
-            ctx.fillText(`${wy * SCALE}мм`, 12, sCoord.y - 4);
-        }
-
         // Маркер центра координат (0,0)
         ctx.fillStyle = '#334155';
         ctx.beginPath(); ctx.arc(zeroScreen.x, zeroScreen.y, 4, 0, 2 * Math.PI); ctx.fill();
@@ -149,6 +141,7 @@ export function initEditor2D(appState) {
         ctx.fillText("ЦЕНТР (0,0)", zeroScreen.x + 8, zeroScreen.y - 8);
         ctx.restore();
     }
+
 
     // ПРОФЕССИОНАЛЬНЫЕ РАЗМЕРНЫЕ ЛИНИИ (Фиксированный размер на экране)
     function drawFixedDimensionLine(wx1, wy1, wx2, wy2, valueText) {
