@@ -264,13 +264,13 @@ export function initEditor2D(appState) {
                 const adjustedMouse = getOrthoCoordinates(currentPoints, snapResult.world);
                 const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
                 if (liveLen > 0)
-                    drawFixedDimensionLine(ctx, worldToScreen, currentPoints.x, currentPoints.y, adjustedMouse.x, adjustedMouse.y, ${ liveLen } мм);
+                    drawFixedDimensionLine(ctx, worldToScreen, currentPoints.x, currentPoints.y, adjustedMouse.x, adjustedMouse.y, `${ liveLen } мм`);
             } else if (currentTool === 'rectangle') {
                 const lengthX = Math.round(Math.abs(worldMouse.x - currentPoints.x) * SCALE);
                 const lengthY = Math.round(Math.abs(worldMouse.y - currentPoints.y) * SCALE);
                 // Вывод live-габаритов
-                drawFixedDimensionLine(ctx, worldToScreen, currentPoints.x, currentPoints.y, worldMouse.x, currentPoints.y, ${ lengthX } мм);
-                drawFixedDimensionLine(ctx, worldToScreen, worldMouse.x, currentPoints.y, worldMouse.x, worldMouse.y, ${ lengthY } мм);
+                drawFixedDimensionLine(ctx, worldToScreen, currentPoints.x, currentPoints.y, worldMouse.x, currentPoints.y, `${ lengthX } мм`);
+                drawFixedDimensionLine(ctx, worldToScreen, worldMouse.x, currentPoints.y, worldMouse.x, worldMouse.y, `${ lengthY } мм`);
             }
         }
         // 4. Индикатор магнита замыкания
@@ -296,7 +296,8 @@ export function initEditor2D(appState) {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             // Выводим только число метров с прозрачным фоном вокруг
-            ctx.fillText(${ area } м², centerScreen.x, centerScreen.y);
+                        ctx.fillText(`${area} м²`, centerScreen.x, centerScreen.y);
+
             ctx.restore();
         }
     }
