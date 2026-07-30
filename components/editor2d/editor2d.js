@@ -1,4 +1,4 @@
-/* components/editor2d/editor2d.js — Модуль управления 2D-редактором помещений. Отвечает за измерительную сетку, режим Орто (Shift) и стрелочные строительные размеры стен на холсте Canvas. */
+/* components/editor2d/editor2d.js — Модуль управления 2D-редактором помещений. Отвечает за измерительную сетку, режим Орто (Shift) и стрелочные строительные размеры стен с поворотом текста параллельно линиям. */
 
 export function initEditor2D(appState) {
     const canvas = document.getElementById('floorplan-canvas');
@@ -21,7 +21,7 @@ export function initEditor2D(appState) {
         if (e.key === 'Shift') { isShiftPressed = false; render(); }
     });
 
-    // Функция авто-подгонки холста под контейнер (без изменения глобальной верстки)
+    // Функция авто-подгонки холста под контейнер
     function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
@@ -36,7 +36,6 @@ export function initEditor2D(appState) {
         const dx = Math.abs(current.x - start.x);
         const dy = Math.abs(current.y - start.y);
         
-        // Если сдвиг по горизонтали больше, выравниваем в ровную линию по горизонтали
         if (dx > dy) {
             return { x: current.x, y: start.y };
         } else {
@@ -59,18 +58,17 @@ export function initEditor2D(appState) {
         
         for (let y = 0; y < canvas.height; y += step) {
             ctx.strokeStyle = y % 100 === 0 ? '#cbd5e1' : '#f1f5f9';
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(0, canvas.height); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             if (y > 0 && y % 100 === 0) ctx.fillText(`${y * SCALE}мм`, 4, y - 4);
         }
     }
 
-    // ФУНКЦИЯ ОТРИСОВКИ СТРЕЛОК РАЗМЕРОВ С ЗАСЕЧКАМИ (как на чертежах)
+    // ФУНКЦИЯ ОТРИСОВКИ СТРЕЛОК РАЗМЕРОВ С ПАРАЛЛЕЛЬНЫМ ПОВОРОТОМ ЦИФР
     function drawDimensionLine(x1, y1, x2, y2, valueText) {
-        const offset = 25; // Вынос размерной линии в сторону от стены
+        const offset = 30; // Вынос размерной линии наружу от стены
         
-        // Считаем угол стены
-        const angle = Math.atan2(y2 - y1, x2 - x1);
+        // Считаем угол наклона стены в радианах
+        let angle = Math.atan2(y2 - y1, x2 - x1);
         
         // Считаем перпендикулярный вектор для выноса линии
         const pX = -Math.sin(angle) * offset;
@@ -93,7 +91,7 @@ export function initEditor2D(appState) {
         // 2. Главная линия размера
         ctx.beginPath(); ctx.moveTo(rx1, ry1); ctx.lineTo(rx2, ry2); ctx.stroke();
 
-        // 3. Рисуем засечки (наклонные штрихи по краям) под 45 градусов
+        // 3. Строительные засечки (наклонные штрихи по краям) под 45 градусов
         const tickLen = 6;
         ctx.lineWidth = 1.5;
         
@@ -107,21 +105,30 @@ export function initEditor2D(appState) {
         ctx.lineTo(rx2 + Math.cos(angle + Math.PI/4) * tickLen, ry2 + Math.sin(angle + Math.PI/4) * tickLen);
         ctx.stroke();
 
-        // 4. Текст размера по центру
+        // 4. МАТЕМАТИКА ПОВОРОТА ТЕКСТА ПАРАЛЛЕЛЬНО СТЕНЕ
         const midX = (rx1 + rx2) / 2;
         const midY = (ry1 + ry2) / 2;
-        ctx.fillStyle = '#0f172a';
+
+        ctx.translate(midX, midY); // Смещаем центр координат в точку текста
+        
+        // Переворачиваем текст на 180 градусов, если стена чертится справа налево, чтобы цифры не были «вверх ногами»
+        if (angle > Math.PI / 2 || angle < -Math.PI / 2) {
+            angle -= Math.PI;
+        }
+        ctx.rotate(angle); // Поворачиваем холст на угол стены
+
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textBaseline = 'bottom'; // Текст будет лежать СВЕРХУ над линией размеров
 
-        // Небольшая белая плашка под текстом, чтобы линии сетки не перекрывали цифры
+        // Рисуем небольшую белую подложку под текст против наложения сетки
         const textWidth = ctx.measureText(valueText).width + 6;
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(midX - textWidth/2, midY - 7, textWidth, 14);
+        ctx.fillRect(-textWidth/2, -13, textWidth, 12);
 
         ctx.fillStyle = '#0f172a';
-        ctx.fillText(valueText, midX, midY);
+        ctx.fillText(valueText, 0, -2); // Смещение вверх на 2 пикселя от линии
+        
         ctx.restore();
     }
 
@@ -139,7 +146,7 @@ export function initEditor2D(appState) {
 
         // Отрисовка готовых стен
         ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 12; // Жирные профессиональные стены
+        ctx.lineWidth = 12; 
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -149,7 +156,6 @@ export function initEditor2D(appState) {
             ctx.lineTo(wall.x2, wall.y2);
             ctx.stroke();
 
-            // Выводим размерную линию со стрелками для каждой готовой стены
             const wallLength = getDistanceInMM({x: wall.x1, y: wall.y1}, {x: wall.x2, y: wall.y2});
             drawDimensionLine(wall.x1, wall.y1, wall.x2, wall.y2, `${wallLength} мм`);
         });
@@ -165,7 +171,6 @@ export function initEditor2D(appState) {
             ctx.lineTo(adjustedMouse.x, adjustedMouse.y);
             ctx.stroke();
 
-            // Выводим live-размер в левую панель параметров
             const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
             const infoText = document.getElementById('wall-len-info');
             if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">${liveLen} мм</span>`;
@@ -190,7 +195,6 @@ export function initEditor2D(appState) {
         if (!currentPoints) {
             currentPoints = { x, y };
         } else {
-            // Применяем выравнивание Орто при сохранении стены, если Shift зажат
             const finalPoint = getOrthoCoordinates(currentPoints, { x, y });
             
             appState.walls.push({ 
