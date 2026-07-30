@@ -373,38 +373,29 @@ export function initEditor2D(appState) {
         if (currentTool === 'pencil') e.preventDefault();
 
     });
-    // Управление кнопками инструментов панели с очисткой незавершённых линий
+    // Кнопки инструментов
     const toolPencil = document.getElementById('tool-pencil');
     const toolRectShape = document.getElementById('tool-rect-shape');
 
     if (toolPencil && toolRectShape) {
+
         toolPencil.addEventListener('click', () => {
-            if (isRoomClosed) return;
-            currentTool = 'pencil';
-            toolPencil.classList.add('active'); 
+            if (isRoomClosed) return; currentTool = 'pencil';
+            toolPencil.classList.add('active');
             toolRectShape.classList.remove('active');
             canvas.style.cursor = 'crosshair';
-            
-            // ТОЧЕЧНАЯ ПРАВКА: Сбрасываем недорисованную линию при смене инструмента
-            currentPoints = null; 
-            inputBuffer = "";
-            render();
+            currentPoints = null; render();
         });
-
         toolRectShape.addEventListener('click', () => {
             if (isRoomClosed) return;
             currentTool = 'rectangle';
-            toolRectShape.classList.add('active'); 
+            toolRectShape.classList.add('active');
             toolPencil.classList.remove('active');
             canvas.style.cursor = 'cell';
-            
-            // ТОЧЕЧНАЯ ПРАВКА: Сбрасываем недорисованную линию при смене инструмента
-            currentPoints = null; 
-            inputBuffer = "";
+            currentPoints = null;
             render();
         });
     }
-
 
     // Кнопка очистки — СБРОС И ПОЛНАЯ РАЗБЛОКИРОВКА МЕНЮ С СОХРАНЕНИЕМ ТЕКУЩЕГО ИНСТРУМЕНТА
     const clearBtn = document.getElementById('btn-clear-canvas');
