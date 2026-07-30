@@ -8,16 +8,23 @@
     background-color: #ffffff;
 }
 
+
+
 /* Верхняя статус-панель шагов */
 .main-header {
     height: 70px;
+    min-height: 70px;       /* Жестко фиксируем минимальную высоту */
+    max-height: 70px;       /* Жестко фиксируем максимальную высоту */
+    flex-shrink: 0;         /* ЗАПРЕЩАЕМ редактору и любым другим блокам сжимать шапку! */
     background: #ffffff;
     border-bottom: 2px solid #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 30px;
+    box-sizing: border-box; /* Чтобы рамка border не увеличивала высоту */
 }
+
 
 .logo {
     font-weight: 800;
