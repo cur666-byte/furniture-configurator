@@ -33,18 +33,23 @@
     height: 100%;
 }
 
+
 .step-item {
     display: flex;
     align-items: center;
+    justify-content: center; /* Центрируем текст и цифру внутри кнопки */
     gap: 8px;
-    padding: 0 20px;
+    width: 160px;          /* ЖЕСТКАЯ ФИКСИРОВАННАЯ ШИРИНА ШАГА — кнопки теперь одинаковые! */
+    min-width: 160px;
     font-size: 13px;
     font-weight: 700;
     color: #94a3b8;
-    position: relative; /* Добавили, чтобы красная линия позиционировалась относительно кнопки */
+    position: relative; 
     cursor: pointer;
-    height: 100%; /* Растянули на всю высоту шапки для удобства клика */
+    height: 100%; 
+    white-space: nowrap;   /* Запрещаем тексту переноситься на новую строку */
 }
+
 
 .step-item.active {
     color: #0f172a;

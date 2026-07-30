@@ -1,3 +1,7 @@
+
+/* components/welcome/welcome.js — Микро-модуль приветственного окна. Отвечает за показ стартовой карточки и сбор имени проекта. */
+
+
 export function initWelcome(appState, onComplete) {
     const welcomeContainer = document.getElementById('welcome-step');
     if (!welcomeContainer) return;

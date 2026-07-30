@@ -1,3 +1,7 @@
+
+/* app.js — Главный диспетчер приложения. Управляет переключением между модальным окном приветствия и главной страницей. */
+
+
 // Импортируем ТОЛЬКО логику скриптов (никаких HTML импортов здесь быть не должно!)
 import { initWelcome } from './components/welcome/welcome.js';
 import { initMainPage } from './components/main-page/main-page.js';

@@ -1,3 +1,7 @@
+/* components/editor2d/editor2d.js — Модуль 2D-редактора. Управляет холстом Canvas, размерной сеткой и логикой интерактивного черчения стен. */
+
+
+
 export function initEditor2D(appState) {
     const canvas = document.getElementById('floorplan-canvas');
     if (!canvas) return;
