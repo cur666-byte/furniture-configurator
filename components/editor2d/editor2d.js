@@ -397,32 +397,29 @@ export function initEditor2D(appState) {
         });
     }
 
-    // Кнопка очистки — СБРОС И ПОЛНАЯ РАЗБЛОКИРОВКА МЕНЮ С СОХРАНЕНИЕМ ТЕКУЩЕГО ИНСТРУМЕНТА
+    // Кнопка очистки — СБРОС И ПОЛНАЯ РАЗБЛОКИРОВКА МЕНЮ
     const clearBtn = document.getElementById('btn-clear-canvas');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-            appState.walls = []; 
-            currentPoints = null; 
+            appState.walls = [];
+            currentPoints = null;
             inputBuffer = "";
             isRoomClosed = false;
-            
-            // Разблокируем кнопки в меню
+
+            // Возвращаем кнопкам активность напрямую
             if (toolPencil) toolPencil.disabled = false;
             if (toolRectShape) toolRectShape.disabled = false;
-            
-            // ТОЧЕЧНАЯ ПРАВКА ПАМЯТИ: сохраняем текущий инструмент currentTool и просто обновляем его подсветку
-            if (currentTool === 'pencil') {
-                if (toolPencil) toolPencil.classList.add('active');
-                if (toolRectShape) toolRectShape.classList.remove('active');
-                canvas.style.cursor = 'crosshair';
-            } else if (currentTool === 'rectangle') {
-                if (toolRectShape) toolRectShape.classList.add('active');
-                if (toolPencil) toolPencil.classList.remove('active');
-                canvas.style.cursor = 'cell';
-            }
-            
-            checkRoomClosure(); 
+
+            // Возвращаем карандаш как дефолтный инструмент после сброса
+            currentTool = 'pencil';
+            if (toolPencil) toolPencil.classList.add('active');
+            if (toolRectShape) toolRectShape.classList.remove('active');
+
+            checkRoomClosure();
             render();
         });
     }
+
+    window.addEventListener('resize', resize);
+    resize();
 }
