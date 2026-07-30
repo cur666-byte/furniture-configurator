@@ -5,14 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Конструктор Мебели</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Подключаем стили модулей изолированно -->
     <link rel="stylesheet" href="components/welcome/welcome.css">
     <link rel="stylesheet" href="components/main-page/main-page.css">
 </head>
 <body>
 
-    <!-- Единый главный контейнер, куда JS по очереди зальет экраны -->
-    <div id="app-root"></div>
+    <!-- 1. ОКНО ПРИВЕТСТВИЯ (Оверлей поверх экрана) -->
+    <div class="welcome-overlay" id="welcome-step">
+        <!-- Сюда вставляем чистую разметку из welcome.html -->
+        <div class="welcome-modal">
+            <div class="welcome-header">
+                <h2>📐 Добро пожаловать!</h2>
+                <p>Пожалуйста, заполните стартовую анкету проекта.</p>
+            </div>
+            <div class="welcome-form">
+                <div class="input-field">
+                    <label>Название вашего проекта:</label>
+                    <input type="text" id="welcome-project-name" value="Моя новая кухня">
+                </div>
+                <div class="input-field">
+                    <label>Высота потолка (мм):</label>
+                    <input type="number" id="welcome-room-height" value="2700">
+                </div>
+                <button id="welcome-submit-btn">Создать проект →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ГЛАВНАЯ СТРАНИЦА (Изначально скрыта классом hidden) -->
+    <div id="main-page-step" class="hidden">
+        <!-- Сюда вставляем чистую разметку из main-page.html -->
+        <div class="main-page-layout">
+            <header class="main-header">
+                <div class="logo">📐 FurnitureCAD</div>
+                <nav class="tabs-nav">
+                    <button class="nav-tab active" data-tab="2d">1. План (2D)</button>
+                    <button class="nav-tab" data-tab="3d">2. Конструктор (3D)</button>
+                </nav>
+                <div class="project-badge" id="main-project-name">Проект</div>
+            </header>
+            <div class="workspace-area">
+                <aside class="nobilia-sidebar">
+                    <h3>Шаблоны комнат</h3>
+                    <div class="template-grid">
+                        <button class="tpl-btn">Прямоугольник</button>
+                        <button class="tpl-btn">Г-образная</button>
+                        <button class="tpl-btn">Свободная форма</button>
+                    </div>
+                </aside>
+                <main class="editor-viewport" id="editor-viewport">
+                    <div class="empty-notice">Здесь будет разворачиваться выбранный редактор</div>
+                </main>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="app.js"></script>
 </body>

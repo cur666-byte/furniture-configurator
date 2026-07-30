@@ -6,35 +6,19 @@ const appState = {
     roomHeight: 2700,
 };
 
-const appRoot = document.getElementById('app-root');
+const welcomeStep = document.getElementById('welcome-step');
+const mainPageStep = document.getElementById('main-page-step');
 
-// Этап 1: Показываем маленькое окно приветствия поверх пустого экрана
-function showWelcomeModal() {
-    appRoot.innerHTML = `<div class="welcome-overlay" id="modal-container"></div>`;
-    
-    fetch('components/welcome/welcome.html')
-        .then(res => res.text())
-        .then(html => {
-            const container = document.getElementById('modal-container');
-            container.innerHTML = html;
-            
-            initWelcome(appState, () => {
-                // Когда анкета заполнена, уничтожаем окно и переходим на Главную страницу
-                container.remove();
-                showMainPage();
-            });
-        });
+function startApp() {
+    // Инициализируем микро-окно приветствия
+    initWelcome(appState, () => {
+        // Когда анкета заполнена:
+        welcomeStep.classList.add('hidden');     // Прячем окно приветствия
+        mainPageStep.classList.remove('hidden'); // Показываем Главную страницу
+        
+        // Запускаем логику Главной Страницы
+        initMainPage(appState);
+    });
 }
 
-// Этап 2: Загружаем полноценную Главную страницу проекта
-function showMainPage() {
-    fetch('components/main-page/main-page.html')
-        .then(res => res.text())
-        .then(html => {
-            appRoot.innerHTML = html;
-            initMainPage(appState); // Передаем данные анкеты в логику Главной страницы
-        });
-}
-
-// Старт приложения
-showWelcomeModal();
+startApp();
