@@ -1,24 +1,32 @@
 import { initWelcome } from './components/welcome/welcome.js';
 import { initMainPage } from './components/main-page/main-page.js';
 
+// Глобальное состояние (убрали лишние свойства)
 const appState = {
     projectName: '',
-    roomHeight: 2700,
+    template: 'empty'
 };
 
+// Проверяем наличие элементов перед запуском, чтобы избежать падения скрипта
 const welcomeStep = document.getElementById('welcome-step');
 const mainPageStep = document.getElementById('main-page-step');
 
 function startApp() {
-    // Инициализируем микро-окно приветствия
+    if (!welcomeStep || !mainPageStep) {
+        console.error("Критическая ошибка: Корневые контейнеры не найдены в index.html!");
+        return;
+    }
+
+    // Запускаем окно приветствия
     initWelcome(appState, () => {
-        // Когда анкета заполнена:
+        // Логика, которая сработает ПОСЛЕ нажатия кнопки "Создать проект"
         welcomeStep.classList.add('hidden');     // Прячем окно приветствия
         mainPageStep.classList.remove('hidden'); // Показываем Главную страницу
         
-        // Запускаем логику Главной Страницы
+        // Передаем управление главной странице
         initMainPage(appState);
     });
 }
 
-startApp();
+// Запускаем приложение, когда структура страницы полностью готова
+document.addEventListener('DOMContentLoaded', startApp);
