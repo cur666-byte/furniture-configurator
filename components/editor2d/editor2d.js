@@ -3,25 +3,20 @@ export function initEditor2D(appState) {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    
-    // Выводим параметры проекта в боковую панель
-    document.getElementById('info-height').textContent = appState.roomHeight;
-    document.getElementById('info-thickness').textContent = appState.wallThickness;
-
     let currentPoints = []; // временные точки черчения
     let mousePos = { x: 0, y: 0 }; // текущая позиция мыши
 
-    // Подгоняем холст под размеры контейнера
+    // Автоматическая подгонка размера холста
     function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width - 30; // учитываем отступы padding
-        canvas.height = rect.height - 30;
+        canvas.width = rect.width;
+        canvas.height = rect.height;
         render();
     }
 
-    // Сетка (миллиметровка)
+    // Отрисовка координатной сетки (миллиметровки)
     function drawGrid() {
-        const step = 40; // шаг сетки
+        const step = 40; // шаг сетки в пикселях
         ctx.strokeStyle = '#f1f5f9';
         ctx.lineWidth = 1;
         
@@ -33,14 +28,14 @@ export function initEditor2D(appState) {
         }
     }
 
-    // Отрисовка всех объектов
+    // Главная функция отрисовки сцены
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid();
 
-        // Рисуем готовые стены из глобальной базы данных
+        // 1. Рисуем уже сохраненные готовые стены
         ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = appState.wallThickness / 20; // масштабируем толщину для визуализации
+        ctx.lineWidth = 8; // Толщина стены на чертеже
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -51,55 +46,61 @@ export function initEditor2D(appState) {
             ctx.stroke();
         });
 
-        // Динамический предпросмотр стены при движении мыши
+        // 2. Рисуем динамическую линию, которую пользователь тянет мышкой прямо сейчас
         if (currentPoints.length === 1) {
-            ctx.strokeStyle = '#0071e3';
+            ctx.strokeStyle = '#0071e3'; // Фирменный синий цвет
             ctx.lineWidth = 4;
-            ctx.setLineDash([6, 4]); // пунктирная линия
             ctx.beginPath();
             ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
             ctx.lineTo(mousePos.x, mousePos.y);
             ctx.stroke();
-            ctx.setLineDash([]); // сбрасываем пунктир
         }
     }
 
-    // Слушатели событий мыши
+    // Слежение за движением мыши
     canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         mousePos.x = e.clientX - rect.left;
         mousePos.y = e.clientY - rect.top;
-        if (currentPoints.length === 1) render(); // перерисовываем только если тянем стену
+        if (currentPoints.length === 1) render();
     });
 
+    // Клик мышкой — ставим точку или строим стену
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
         if (currentPoints.length === 0) {
+            // Первый клик: начали стену
             currentPoints.push({ x, y });
         } else {
+            // Второй клик: зафиксировали стену и сохранили в общую базу данных
             const start = currentPoints[0];
-            // Сохраняем стену в ГЛОБАЛЬНОЕ состояние приложения
             appState.walls.push({ x1: start.x, y1: start.y, x2: x, y2: y });
             currentPoints = []; // сбрасываем для следующей стены
-            
-            // Как только нарисована хотя бы одна стена, открываем доступ к 3D вкладке!
-            document.getElementById('tab-3d').removeAttribute('disabled');
         }
         render();
     });
 
-    // Кнопка очистки холста
-    document.getElementById('btn-clear-canvas').addEventListener('click', () => {
-        appState.walls = [];
-        currentPoints = [];
-        render();
-    });
+    // Кнопка «Очистить всё»
+    const clearBtn = document.getElementById('btn-clear-canvas');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            appState.walls = [];
+            currentPoints = [];
+            render();
+        });
+    }
 
-    // Отслеживаем изменение размеров окна
+    // Кнопка перехода в 3D (пока просто выведем алерт)
+    const to3dBtn = document.getElementById('btn-to-3d');
+    if (to3dBtn) {
+        to3dBtn.addEventListener('click', () => {
+            alert('Стены готовы! На следующем этапе мы превратим этот чертеж в 3D комнату.');
+        });
+    }
+
     window.addEventListener('resize', resize);
     resize();
 }
-
