@@ -65,7 +65,7 @@ export function initEditor2D(appState) {
 
     // ФУНКЦИЯ ОТРИСОВКИ СТРЕЛОК РАЗМЕРОВ С ПАРАЛЛЕЛЬНЫМ ПОВОРОТОМ ЦИФР
     function drawDimensionLine(x1, y1, x2, y2, valueText) {
-        const offset = 30; // Вынос размерной линии наружу от стены
+        const offset = 25; // Вынос размерной линии наружу от стены
         
         // Считаем угол наклона стены в радианах
         let angle = Math.atan2(y2 - y1, x2 - x1);
@@ -105,13 +105,13 @@ export function initEditor2D(appState) {
         ctx.lineTo(rx2 + Math.cos(angle + Math.PI/4) * tickLen, ry2 + Math.sin(angle + Math.PI/4) * tickLen);
         ctx.stroke();
 
-        // 4. МАТЕМАТИКА ПОВОРОТА ТЕКСТА ПАРАЛЛЕЛЬНО СТЕНЕ
+        // 4. ПОВОРОТ ТЕКСТА ПАРАЛЛЕЛЬНО ЛИНИИ
         const midX = (rx1 + rx2) / 2;
         const midY = (ry1 + ry2) / 2;
 
-        ctx.translate(midX, midY); // Смещаем центр координат в точку текста
+        ctx.translate(midX, midY); // Переносим центр координат в точку вывода текста
         
-        // Переворачиваем текст на 180 градусов, если стена чертится справа налево, чтобы цифры не были «вверх ногами»
+        // Корректируем угол, чтобы текст никогда не переворачивался "вверх ногами" (чертежный стандарт)
         if (angle > Math.PI / 2 || angle < -Math.PI / 2) {
             angle -= Math.PI;
         }
@@ -119,18 +119,22 @@ export function initEditor2D(appState) {
 
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom'; // Текст будет лежать СВЕРХУ над линией размеров
+        ctx.textBaseline = 'bottom'; // Текст будет аккуратно лежать НАД линией
 
-        // Рисуем небольшую белую подложку под текст против наложения сетки
-        const textWidth = ctx.measureText(valueText).width + 6;
+        // Считаем ширину текста для белой подложки
+        const textWidth = ctx.measureText(valueText).width + 8;
+        
+        // Рисуем белую плашку, чтобы сетка не просвечивала сквозь цифры
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-textWidth/2, -13, textWidth, 12);
+        ctx.fillRect(-textWidth / 2, -14, textWidth, 13);
 
+        // Пишем сам текст (смещаем на 2 пикселя вверх, чтобы он не сливался с линией)
         ctx.fillStyle = '#0f172a';
-        ctx.fillText(valueText, 0, -2); // Смещение вверх на 2 пикселя от линии
+        ctx.fillText(valueText, 0, -2);
         
         ctx.restore();
     }
+
 
     // РАСЧЕТ РАССТОЯНИЯ В МИЛЛИМЕТРАХ
     function getDistanceInMM(p1, p2) {
@@ -245,3 +249,4 @@ export function initEditor2D(appState) {
     window.addEventListener('resize', resize);
     resize();
 }
+drawDimensionLine
