@@ -1,4 +1,4 @@
-/* components/editor2d/editor2d.js — Модуль управления 2D-редактором помещений. Реализует непрерывное черчение стен (Polyline), замыкание контура магнитом, привязку к сетке и ввод точной длины с клавиатуры. */
+/* components/editor2d/editor2d.js — Модуль управления 2D-редактором помещений. Реализует непрерывное черчение карандашом, интерактивный прямоугольник по двум точкам, вычисление площади и блокировку черчения после замыкания контура. */
 
 import { initNavigation } from './navigation.js';
 import { drawGrid, drawFixedDimensionLine } from './drawer.js';
@@ -8,27 +8,30 @@ export function initEditor2D(appState) {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    let currentPoints = null; // Точка старта текущей стены (в мировых координатах)
+    let currentPoints = null; // Точка старта текущей стены/прямоугольника (в мировых координатах)
     let mousePos = { x: 0, y: 0 }; // Экранная позиция мыши (в пикселях)
     let currentTool = 'pencil'; // Активный инструмент ('pencil' или 'rectangle')
     let isShiftPressed = false; // Режим Орто
+    let isRoomClosed = false; // Флаг: замкнут ли контур помещения
 
-    // ПЕРЕМЕННЫЕ ДЛЯ КЛАВИАТУРНОГО ВВОДА РАЗМЕРА
-    let inputBuffer = ""; // Сюда собираем нажатые цифры
+    let inputBuffer = ""; // Буфер клавиатурного ввода размера
     const SCALE = 10;     // 1 пиксель = 10 реальных миллиметров
 
     // Подключаем стабильный модуль навигации
     const { navState, screenToWorld, worldToScreen, handleFirstResize } = initNavigation(canvas, render);
 
-    // СЛУШАТЕЛИ КЛАВИАТУРЫ ДЛЯ ОРТО, СБРОСА И ВВОДА ЦИФР
+    // Если в базе уже есть стены (например, загрузили проект), проверяем замкнутость контура
+    checkRoomClosure();
+
+    // Слушатели клавиатуры
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
     function handleKeyDown(e) {
+        if (isRoomClosed) return; // Если комната готова, клавиатурный ввод заблокирован
         if (e.key === 'Shift') { isShiftPressed = true; render(); return; }
         if (e.key === 'Escape') { currentPoints = null; inputBuffer = ""; render(); return; }
 
-        // Если пользователь чертит и вводит цифры с клавиатуры
         if (currentPoints && currentTool === 'pencil') {
             if (e.key >= '0' && e.key <= '9') {
                 inputBuffer += e.key;
@@ -37,7 +40,6 @@ export function initEditor2D(appState) {
                 inputBuffer = inputBuffer.slice(0, -1);
                 updateLiveBufferDisplay();
             } else if (e.key === 'Enter' && inputBuffer.length > 0) {
-                // Строим стену по введенной длине в миллиметрах
                 buildWallFromKeyboardInput();
             }
         }
@@ -47,45 +49,41 @@ export function initEditor2D(appState) {
         if (e.key === 'Shift') { isShiftPressed = false; render(); }
     }
 
-    // Функция обновления текста текущего ввода в левой панели
     function updateLiveBufferDisplay() {
         const infoText = document.getElementById('wall-len-info');
         if (infoText) {
             if (inputBuffer.length > 0) {
                 infoText.innerHTML = `Ввод длины: <span class="highlight" style="background:#fef08a; padding:2px 4px; border-radius:3px;">${inputBuffer} мм</span>`;
             } else {
-                render(); // Перерисует и вернет стандартную live-длину
+                render();
             }
         }
     }
 
-    // СТРОИМ СТЕНУ ПО ТОЧНОЙ ДЛИНЕ С КЛАВИАТУРЫ
     function buildWallFromKeyboardInput() {
+        if (isRoomClosed) return;
         const desiredLengthMM = parseInt(inputBuffer);
-        const desiredLengthWorld = desiredLengthMM / SCALE; // Переводим мм в мировые пиксели
+        const desiredLengthWorld = desiredLengthMM / SCALE;
 
         const worldMouse = screenToWorld(mousePos.x, mousePos.y);
         const adjustedMouse = getOrthoCoordinates(currentPoints, worldMouse);
 
-        // Считаем угол направления мыши относительно стартовой точки
         const angle = Math.atan2(adjustedMouse.y - currentPoints.y, adjustedMouse.x - currentPoints.x);
 
-        // Рассчитываем финальную точку ровно по вектору направления на заданную длину
         const finalWorldPoint = {
             x: currentPoints.x + Math.cos(angle) * desiredLengthWorld,
             y: currentPoints.y + Math.sin(angle) * desiredLengthWorld
         };
 
-        // Сохраняем стену в базу данных
         appState.walls.push({
             x1: currentPoints.x, y1: currentPoints.y,
             x2: finalWorldPoint.x, y2: finalWorldPoint.y
         });
 
-        // НЕПРЕРЫВНОЕ РИСОВАНИЕ: Новая точка старта начинается там, где закончилась предыдущая!
         currentPoints = { x: finalWorldPoint.x, y: finalWorldPoint.y };
-        inputBuffer = ""; // Очищаем буфер ввода
+        inputBuffer = "";
 
+        checkRoomClosure();
         render();
     }
 
@@ -104,17 +102,16 @@ export function initEditor2D(appState) {
         return dx > dy ? { x: current.x, y: start.y } : { x: start.x, y: current.y };
     }
 
-    // МАТЕМАТИКА МАГНИТНЫХ ПРИВЯЗОК (К сетке и к началу первой линии)
+    // МАТЕМАТИКА МАГНИТНЫХ ПРИВЯЗОК И БЛОКИРОВКИ
     function getSnappedCoordinates(screenX, screenY) {
-        // Проверяем привязку к началу ПЕРВОЙ стены для замыкания контура
-        if (appState.walls.length > 0 && currentPoints) {
+        if (isRoomClosed) return { world: screenToWorld(screenX, screenY), isClosingSnap: false };
+
+        if (appState.walls.length > 0 && currentPoints && currentTool === 'pencil') {
             const firstWall = appState.walls[0];
             const startScreenPos = worldToScreen(firstWall.x1, firstWall.y1);
-            
-            // Расстояние в пикселях на экране от мыши до самого начала чертежа
             const distToStart = Math.hypot(screenX - startScreenPos.x, screenY - startScreenPos.y);
             
-            if (distToStart < 15) { // Радиус магнита 15 пикселей
+            if (distToStart < 15) {
                 return { 
                     world: { x: firstWall.x1, y: firstWall.y1 }, 
                     isClosingSnap: true 
@@ -122,12 +119,9 @@ export function initEditor2D(appState) {
             }
         }
 
-        // Если это САМАЯ первая точка проекта, привязываем её к узлам размерной сетки (пункт 3)
         if (!currentPoints) {
             const worldMouse = screenToWorld(screenX, screenY);
-            const gridStepMM = 500; // Привязка к шагу 500 мм
-            const gridStepWorld = gridStepMM / SCALE;
-
+            const gridStepWorld = 50; // Привязка к шагу 500 мм в начале
             return {
                 world: {
                     x: Math.round(worldMouse.x / gridStepWorld) * gridStepWorld,
@@ -137,8 +131,62 @@ export function initEditor2D(appState) {
             };
         }
 
-        // В остальных случаях отдаем обычные мировые координаты под мышкой
         return { world: screenToWorld(screenX, screenY), isClosingSnap: false };
+    }
+
+    // Автоматическая проверка: замкнулся ли периметр помещения
+    function checkRoomClosure() {
+        if (appState.walls.length < 3) {
+            isRoomClosed = false;
+            return;
+        }
+        const first = appState.walls[0];
+        const last = appState.walls[appState.walls.length - 1];
+        
+        // Если начало первой стены совпадает с концом последней — контур замкнут
+        const distance = Math.hypot(first.x1 - last.x2, first.y1 - last.y2);
+        isRoomClosed = distance < 0.1;
+
+        // Визуально отключаем кнопки выбора инструментов, если чертить больше нельзя
+        const toolPencil = document.getElementById('tool-pencil');
+        const toolRectShape = document.getElementById('tool-rect-shape');
+        if (isRoomClosed) {
+            if (toolPencil) toolPencil.disabled = true;
+            if (toolRectShape) toolRectShape.disabled = true;
+            canvas.style.cursor = 'default';
+        } else {
+            if (toolPencil) toolPencil.disabled = false;
+            if (toolRectShape) toolRectShape.disabled = false;
+        }
+    }
+
+    // МАТЕМАТИКА ВЫЧИСЛЕНИЯ ПЛОЩАДИ КОМНАТЫ (Формула Гаусса)
+    function calculateRoomArea() {
+        if (appState.walls.length < 3) return 0;
+        let sum = 0;
+        
+        for (let i = 0; i < appState.walls.length; i++) {
+            const wall = appState.walls[i];
+            // Переводим мировые координаты в метры (1px = 10мм = 0.01м)
+            const x1 = wall.x1 * 0.01;
+            const y1 = wall.y1 * 0.01;
+            const x2 = wall.x2 * 0.01;
+            const y2 = wall.y2 * 0.01;
+            
+            sum += (x1 * y2) - (x2 * y1);
+        }
+        return Math.abs(sum / 2).toFixed(2);
+    }
+
+    // Нахождение центра геометрической фигуры для вывода надписи площади
+    function getRoomCenterScreen() {
+        let totalX = 0, totalY = 0, count = 0;
+        appState.walls.forEach(wall => {
+            totalX += wall.x1; totalY += wall.y1;
+            totalX += wall.x2; totalY += wall.y2;
+            count += 2;
+        });
+        return worldToScreen(totalX / count, totalY / count);
     }
 
     function getDistanceInMM(p1, p2) {
@@ -150,13 +198,12 @@ export function initEditor2D(appState) {
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Слой 1: Рисуем измерительную динамическую сетку
+        // 1. Слой сетки
         drawGrid(ctx, canvas, navState.zoom, screenToWorld, worldToScreen, SCALE);
 
-        // Вычисляем координаты мыши с учетом магнита
         const snapResult = getSnappedCoordinates(mousePos.x, mousePos.y);
 
-        // Слой 2: Отрисовка стен (Мировые координаты)
+        // 2. Слой стен (Мировые координаты)
         ctx.save();
         ctx.translate(navState.offsetX, navState.offsetY);
         ctx.scale(navState.zoom, -navState.zoom);
@@ -165,58 +212,103 @@ export function initEditor2D(appState) {
         ctx.lineWidth = 12 / navState.zoom; 
         ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
+        // Подсвечиваем готовые стены зеленым полупрозрачным оттенком изнутри, если комната готова
+        if (isRoomClosed) {
+            ctx.fillStyle = 'rgba(0, 113, 227, 0.04)';
+            ctx.beginPath();
+            ctx.moveTo(appState.walls[0].x1, appState.walls[0].y1);
+            appState.walls.forEach(wall => ctx.lineTo(wall.x2, wall.y2));
+            ctx.fill();
+        }
+
         appState.walls.forEach(wall => {
             ctx.beginPath(); ctx.moveTo(wall.x1, wall.y1); ctx.lineTo(wall.x2, wall.y2); ctx.stroke();
         });
 
-        // Рисование линии в процессе
-        if (currentPoints && currentTool === 'pencil' && inputBuffer.length === 0) {
-            const adjustedMouse = getOrthoCoordinates(currentPoints, snapResult.world);
-
+        // Живой интерактивный предпросмотр ПРЯМОУГОЛЬНИКА или КАРАНДАША
+        if (currentPoints && !isRoomClosed) {
             ctx.strokeStyle = '#0071e3'; ctx.lineWidth = 4 / navState.zoom;
-            ctx.beginPath(); ctx.moveTo(currentPoints.x, currentPoints.y); ctx.lineTo(adjustedMouse.x, adjustedMouse.y); ctx.stroke();
-
-            // Выводим live-длину в левое меню
-            const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
-            const infoText = document.getElementById('wall-len-info');
-            if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">${liveLen} мм</span>`;
+            
+            if (currentTool === 'pencil' && inputBuffer.length === 0) {
+                const adjustedMouse = getOrthoCoordinates(currentPoints, snapResult.world);
+                ctx.beginPath(); ctx.moveTo(currentPoints.x, currentPoints.y); ctx.lineTo(adjustedMouse.x, adjustedMouse.y); ctx.stroke();
+                
+                const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
+                const infoText = document.getElementById('wall-len-info');
+                if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">${liveLen} мм</span>`;
+            } 
+            else if (currentTool === 'rectangle') {
+                const worldMouse = screenToWorld(mousePos.x, mousePos.y);
+                // Рисуем 4 синих линии интерактивного прямоугольника
+                ctx.beginPath();
+                ctx.rect(currentPoints.x, currentPoints.y, worldMouse.x - currentPoints.x, worldMouse.y - currentPoints.y);
+                ctx.stroke();
+            }
         }
         ctx.restore();
 
-        // Слой 3: Отрисовка стрелок размеров поверх стен (Экранные координаты)
+        // 3. Слой стрелок размеров (Всегда выносятся СНАРУЖИ контура)
         appState.walls.forEach(wall => {
             const wallLength = getDistanceInMM({x: wall.x1, y: wall.y1}, {x: wall.x2, y: wall.y2});
             drawFixedDimensionLine(ctx, worldToScreen, wall.x1, wall.y1, wall.x2, wall.y2, `${wallLength} мм`);
         });
 
-        // Живой размер при черчении карандашом
-        if (currentPoints && currentTool === 'pencil' && inputBuffer.length === 0) {
-            const adjustedMouse = getOrthoCoordinates(currentPoints, snapResult.world);
-            const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
-            if (liveLen > 0) {
-                drawFixedDimensionLine(ctx, worldToScreen, currentPoints.x, currentPoints.y, adjustedMouse.x, adjustedMouse.y, `${liveLen} мм`);
+        // Выводим временные живые размеры для строящихся элементов
+        if (currentPoints && !isRoomClosed) {
+            const worldMouse = screenToWorld(mousePos.x, mousePos.y);
+            if (currentTool === 'pencil' && inputBuffer.length === 0) {
+                const adjustedMouse = getOrthoCoordinates(currentPoints, snapResult.world);
+                const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
+                if (liveLen > 0) drawFixedDimensionLine(ctx, worldToScreen, currentPoints.x, currentPoints.y, adjustedMouse.x, adjustedMouse.y, `${liveLen} мм`);
+            } 
+            else if (currentTool === 'rectangle') {
+                // Выводим live-размеры ширины и высоты прямоугольника снаружи
+                const lengthX = Math.round(Math.abs(worldMouse.x - currentPoints.x) * SCALE);
+                const lengthY = Math.round(Math.abs(worldMouse.y - currentPoints.y) * SCALE);
+                
+                // Верхний и правый габаритные размеры
+                drawFixedDimensionLine(ctx, worldToScreen, currentPoints.x, currentPoints.y, worldMouse.x, currentPoints.y, `${lengthX} мм`);
+                drawFixedDimensionLine(ctx, worldToScreen, worldMouse.x, currentPoints.y, worldMouse.x, worldMouse.y, `${lengthY} мм`);
             }
         }
 
-        // Слой 4: РИСУЕМ КРАСИВЫЙ ИНДИКАТОР МАГНИТА (Как у конкурентов)
-        if (snapResult.isClosingSnap) {
+        // 4. Индикатор магнита замыкания карандаша
+        if (snapResult.isClosingSnap && !isRoomClosed) {
             const screenTarget = worldToScreen(snapResult.world.x, snapResult.world.y);
             ctx.save();
-            ctx.strokeStyle = '#22c55e'; // Зеленый кружок магнита замыкания
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(screenTarget.x, screenTarget.y, 8, 0, 2 * Math.PI);
-            ctx.stroke();
-            
+            ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(screenTarget.x, screenTarget.y, 8, 0, 2 * Math.PI); ctx.stroke();
             ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
-            ctx.beginPath();
-            ctx.arc(screenTarget.x, screenTarget.y, 4, 0, 2 * Math.PI);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(screenTarget.x, screenTarget.y, 4, 0, 2 * Math.PI); ctx.fill();
+            ctx.restore();
+        }
+
+        // 5. ВЫВОД ПЛОЩАДИ КОМНАТЫ ПО ЦЕНТРУ ЭКРАНА
+        if (isRoomClosed) {
+            const centerScreen = getRoomCenterScreen();
+            const area = calculateRoomArea();
+            
+            ctx.save();
+            ctx.fillStyle = '#cc0000';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Красивая белая плашка-подложка под площадь
+            const labelText = `📐 Площадь: ${area} м²`;
+            const textW = ctx.measureText(labelText).width + 16;
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0,0,0,0.1)';
+            ctx.shadowBlur = 6;
+            ctx.fillRect(centerScreen.x - textW/2, centerScreen.y - 15, textW, 30);
+            
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(labelText, centerScreen.x, centerScreen.y);
             ctx.restore();
         }
     }
 
-    // ОТСЛЕЖИВАНИЕ ДВИЖЕНИЯ МЫШИ
+    // ДВИЖЕНИЕ МЫШИ
     canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         mousePos.x = e.clientX - rect.left;
@@ -224,70 +316,81 @@ export function initEditor2D(appState) {
         if (!navState.isPanning) render();
     });
 
-    // ОБРАБОТКА КЛИКОВ МЫШИ
+    // ОБРАБОТКА КЛИКОВ МЫШИ (БЛОКИРОВКА ПРИ ЗАМЫКАНИИ)
     canvas.addEventListener('mousedown', (e) => {
-        if (e.button !== 0 || navState.isPanning) return;
+        if (e.button !== 0 || navState.isPanning || isRoomClosed) return; // Если комната готова — клики отключены!
 
         const rect = canvas.getBoundingClientRect();
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
 
-        // ИНСТРУМЕНТ: КАРАНДАШ (НЕПРЕРЫВНОЕ ЧЕРЧЕНИЕ)
+        // ИНСТРУМЕНТ: КАРАНДАШ
         if (currentTool === 'pencil') {
             const snapResult = getSnappedCoordinates(screenX, screenY);
 
             if (!currentPoints) {
-                // Самая первая точка проекта (примагнитилась к сетке)
                 currentPoints = { x: snapResult.world.x, y: snapResult.world.y };
             } else {
                 const finalPoint = getOrthoCoordinates(currentPoints, snapResult.world);
-                
-                // Сохраняем готовую стену в базу
                 appState.walls.push({
                     x1: currentPoints.x, y1: currentPoints.y,
                     x2: finalPoint.x, y2: finalPoint.y
                 });
 
                 if (snapResult.isClosingSnap) {
-                    // Контур замкнулся на первую точку! Завершаем непрерывную цепочку
                     currentPoints = null;
                 } else {
-                    // НЕПРЕРЫВНОСТЬ: Следующая стена автоматом начинается из финиша текущей
                     currentPoints = { x: finalPoint.x, y: finalPoint.y };
                 }
             }
-            inputBuffer = ""; // Обнуляем клавиатурный буфер при клике
+            inputBuffer = "";
+            checkRoomClosure();
             render();
         }
 
-        // ИНСТРУМЕНТ: ПРЯМОУГОЛЬНИК (БЫСТРАЯ КОРОБКА)
+        // ИНСТРУМЕНТ: ПРЯМОУГОЛЬНИК ДВУМЯ ТОЧКАМИ
         if (currentTool === 'rectangle') {
             const worldCoord = screenToWorld(screenX, screenY);
-            // Создаем готовую коробку стен 4x3 метра от точки клика
-            appState.walls.push(
-                { x1: worldCoord.x, y1: worldCoord.y, x2: worldCoord.x + 400, y2: worldCoord.y },
-                { x1: worldCoord.x + 400, y1: worldCoord.y, x2: worldCoord.x + 400, y2: worldCoord.y + 300 },
-                { x1: worldCoord.x + 400, y1: worldCoord.y + 300, x2: worldCoord.x, y2: worldCoord.y + 300 },
-                { x1: worldCoord.x, y1: worldCoord.y + 300, x2: worldCoord.x, y2: worldCoord.y }
-            );
-            render();
+
+            if (!currentPoints) {
+                // Первый клик: зафиксировали первый угол прямоугольника
+                currentPoints = { x: worldCoord.x, y: worldCoord.y };
+            } else {
+                // Второй клик: рассчитываем 4 точки углов
+                const x1 = currentPoints.x; const y1 = currentPoints.y;
+                const x2 = worldCoord.x;    const y2 = worldCoord.y;
+
+                // Рисуем строго по часовой стрелке, чтобы стрелочки размеров вынеслись СНАРУЖИ коробки!
+                appState.walls.push(
+                    { x1: x1, y1: y1, x2: x2, y2: y1 }, // Верхняя стена (слева направо)
+                    { x1: x2, y1: y1, x2: x2, y2: y2 }, // Правая стена (сверху вниз)
+                    { x1: x2, y1: y2, x2: x1, y2: y2 }, // Нижняя стена (справа налево)
+                    { x1: x1, y1: y2, x2: x1, y2: y1 }  // Левая стена (снизу вверх)
+                );
+
+                currentPoints = null; // Сбрасываем выделение угла
+                checkRoomClosure();   // Автоматом блокируем черчение, так как коробка замкнута
+                render();
+            }
         }
     });
 
     canvas.addEventListener('contextmenu', e => { if(currentTool === 'pencil') e.preventDefault(); });
 
-    // Управление новыми кнопками инструментов
+    // Управление кнопками инструментов панели
     const toolPencil = document.getElementById('tool-pencil');
     const toolRectShape = document.getElementById('tool-rect-shape');
 
     if (toolPencil && toolRectShape) {
         toolPencil.addEventListener('click', () => {
+            if (isRoomClosed) return;
             currentTool = 'pencil';
             toolPencil.classList.add('active'); toolRectShape.classList.remove('active');
             canvas.style.cursor = 'crosshair';
             currentPoints = null; render();
         });
         toolRectShape.addEventListener('click', () => {
+            if (isRoomClosed) return;
             currentTool = 'rectangle';
             toolRectShape.classList.add('active'); toolPencil.classList.remove('active');
             canvas.style.cursor = 'cell';
@@ -295,10 +398,15 @@ export function initEditor2D(appState) {
         });
     }
 
+    // Кнопка очистки
     const clearBtn = document.getElementById('btn-clear-canvas');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-            appState.walls = []; currentPoints = null; inputBuffer = "";
+            appState.walls = []; 
+            currentPoints = null; 
+            inputBuffer = "";
+            isRoomClosed = false;
+            checkRoomClosure(); 
             render();
         });
     }
