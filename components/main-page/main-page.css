@@ -205,3 +205,28 @@
 .step-item {
     cursor: pointer; /* Делаем верхние вкладки кликабельными */
 }
+/* Блок и кнопка продолжения текущего проекта */
+.continue-project-box {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.continue-action-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #e0f0ff;
+    border: 1px dashed #0071e3;
+    color: #0071e3;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.continue-action-btn:hover {
+    background-color: #0071e3;
+    color: #ffffff;
+    border-style: solid;
+}
