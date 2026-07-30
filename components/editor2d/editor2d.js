@@ -264,25 +264,28 @@ export function initEditor2D(appState) {
     }
 
 
-    // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ
+    // ЛОГИКА МАСШТАБИРОВАНИЯ СКРОЛЛОМ (ТОЧНЫЙ ФОКУС НА КУРСОР С УЧЕТОМ НАПРАВЛЕНИЯ ОСИ Y)
     canvas.addEventListener('wheel', (e) => {
-        e.preventDefault();
+        e.preventDefault(); 
         
+        // Берем позицию мыши относительно холста в экранных пикселях
         const rect = canvas.getBoundingClientRect();
         const mX = e.clientX - rect.left;
         const mY = e.clientY - rect.top;
 
+        // Находим мировую точку под курсором ДО изменения зума (с учетом новой инверсии Y)
         const mouseWorldBefore = screenToWorld(mX, mY);
 
         const zoomFactor = 1.1;
         if (e.deltaY < 0) {
-            zoom = Math.min(zoom * zoomFactor, 12.0);
+            zoom = Math.min(zoom * zoomFactor, 12.0); // Приближение до 1200%
         } else {
-            zoom = Math.max(zoom / zoomFactor, 0.08);
+            zoom = Math.max(zoom / zoomFactor, 0.08); // Отдаление до 8%
         }
 
+        // Пересчитываем смещения так, чтобы мировая точка осталась ровно под курсором (ИСПРАВЛЕНО ЗЕРКАЛО!)
         offsetX = mX - mouseWorldBefore.x * zoom;
-        offsetY = mY - mouseWorldBefore.y * zoom;
+        offsetY = mY + mouseWorldBefore.y * zoom; // Здесь плюс, так как мировая ось Y инвертирована
 
         render();
     }, { passive: false });
@@ -293,6 +296,7 @@ export function initEditor2D(appState) {
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
 
+        // Нажатие колесика мыши (PAN / Перемещение карты)
         if (e.button === 1) {
             e.preventDefault();
             isPanning = true;
@@ -301,6 +305,7 @@ export function initEditor2D(appState) {
             return;
         }
 
+        // Левая кнопка мыши — черчение стен
         if (e.button === 0 && currentTool === 'wall') {
             const worldCoord = screenToWorld(screenX, screenY);
 
@@ -338,6 +343,7 @@ export function initEditor2D(appState) {
         }
     });
 
+    // ОТПУСКАНИЕ МЫШИ
     window.addEventListener('mouseup', (e) => {
         if (e.button === 1) {
             isPanning = false;
@@ -347,7 +353,7 @@ export function initEditor2D(appState) {
 
     canvas.addEventListener('contextmenu', e => { if(currentTool === 'wall') e.preventDefault(); });
 
-    // Инструменты панели управления
+    // Управление боковыми кнопками инструментов
     const toolWall = document.getElementById('tool-wall');
     const toolSelect = document.getElementById('tool-select');
 
@@ -368,6 +374,7 @@ export function initEditor2D(appState) {
         });
     }
 
+    // Кнопка «Очистить всё»
     const clearBtn = document.getElementById('btn-clear-canvas');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
