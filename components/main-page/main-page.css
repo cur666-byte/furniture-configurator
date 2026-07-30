@@ -198,3 +198,10 @@
     display: flex;
     align-items: center;
 }
+.info-section .highlight {
+    font-weight: 700;
+    color: #cc0000;
+}
+.step-item {
+    cursor: pointer; /* Делаем верхние вкладки кликабельными */
+}
