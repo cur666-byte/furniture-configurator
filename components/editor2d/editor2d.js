@@ -379,4 +379,4 @@ export function initEditor2D(appState) {
         window.addEventListener('resize', resize);
         resize();
     }
-    
+}
