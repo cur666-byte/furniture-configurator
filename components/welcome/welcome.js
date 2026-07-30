@@ -1,10 +1,14 @@
 export function initWelcome(appState, onComplete) {
-    const btn = document.getElementById('welcome-submit-btn');
-    if (!btn) return;
+    const form = document.getElementById('welcome-form-element');
+    if (!form) return;
     
-    btn.addEventListener('click', () => {
+    form.addEventListener('submit', (event) => {
+        event.preventDefault(); // Отменяем перезагрузку страницы браузером
+        
+        // Записываем только имя проекта из анкеты
         appState.projectName = document.getElementById('welcome-project-name').value;
-        appState.roomHeight = parseInt(document.getElementById('welcome-room-height').value);
+        
+        // Передаем сигнал в app.js, что анкета заполнена и окно можно закрывать
         onComplete();
     });
 }

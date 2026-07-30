@@ -10,27 +10,24 @@
 </head>
 <body>
 
-    <!-- 1. ОКНО ПРИВЕТСТВИЯ (Оверлей поверх экрана) -->
-    <div class="welcome-overlay" id="welcome-step">
-        <!-- Сюда вставляем чистую разметку из welcome.html -->
-        <div class="welcome-modal">
-            <div class="welcome-header">
-                <h2>📐 Добро пожаловать!</h2>
-                <p>Пожалуйста, заполните стартовую анкету проекта.</p>
-            </div>
-            <div class="welcome-form">
-                <div class="input-field">
-                    <label>Название вашего проекта:</label>
-                    <input type="text" id="welcome-project-name" value="Моя новая кухня">
+        <!-- 1. ОКНО ПРИВЕТСТВИЯ (Оверлей поверх экрана) -->
+        <div class="welcome-overlay" id="welcome-step">
+            <div class="welcome-modal">
+                <div class="welcome-header">
+                    <h2>📐 Добро пожаловать!</h2>
+                    <p>Пожалуйста, заполните стартовую анкету проекта.</p>
                 </div>
-                <div class="input-field">
-                    <label>Высота потолка (мм):</label>
-                    <input type="number" id="welcome-room-height" value="2700">
-                </div>
-                <button id="welcome-submit-btn">Создать проект →</button>
+                <!-- Обернули в форму для четкого срабатывания клика -->
+                <form class="welcome-form" id="welcome-form-element">
+                    <div class="input-field">
+                        <label>Название вашего проекта:</label>
+                        <input type="text" id="welcome-project-name" value="Моя новая кухня" required>
+                    </div>
+                    <button type="submit" id="welcome-submit-btn">Создать проект →</button>
+                </form>
             </div>
         </div>
-    </div>
+
 
     <!-- 2. ГЛАВНАЯ СТРАНИЦА (Изначально скрыта классом hidden) -->
     <div id="main-page-step" class="hidden">

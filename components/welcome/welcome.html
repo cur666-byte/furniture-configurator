@@ -3,16 +3,11 @@
         <h2>📐 Добро пожаловать!</h2>
         <p>Пожалуйста, заполните стартовую анкету проекта.</p>
     </div>
-
-    <div class="welcome-form">
+    <form class="welcome-form" id="welcome-form-element">
         <div class="input-field">
             <label>Название вашего проекта:</label>
-            <input type="text" id="welcome-project-name" value="Моя новая кухня">
+            <input type="text" id="welcome-project-name" value="Моя новая кухня" required>
         </div>
-        <div class="input-field">
-            <label>Высота потолка (мм):</label>
-            <input type="number" id="welcome-room-height" value="2700">
-        </div>
-        <button id="welcome-submit-btn">Создать проект →</button>
-    </div>
+        <button type="submit" id="welcome-submit-btn">Создать проект →</button>
+    </form>
 </div>
