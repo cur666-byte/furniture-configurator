@@ -1,0 +1,78 @@
+<div class="welcome-container">
+    <!-- Левая панель (как в аналоге) -->
+    <aside class="welcome-sidebar">
+        <h3>Шаблоны и проекты</h3>
+        <ul class="sidebar-menu">
+            <li class="active">✨ Создать проект</li>
+            <li class="disabled">📁 Открыть сохраненный</li>
+        </ul>
+        
+        <!-- Быстрые настройки параметров -->
+        <div class="sidebar-settings">
+            <h4>Параметры стен</h4>
+            <div class="mini-input">
+                <label for="room-height">Высота потолка (мм)</label>
+                <input type="number" id="room-height" value="2700" min="2000" max="4000">
+            </div>
+            <div class="mini-input">
+                <label for="wall-thickness">Толщина стен (мм)</label>
+                <input type="number" id="wall-thickness" value="200" min="50" max="500">
+            </div>
+        </div>
+    </aside>
+
+    <!-- Правая область с карточками выбора формы -->
+    <main class="welcome-main">
+        <div class="welcome-top-bar">
+            <input type="text" id="project-name" value="Мой Новый Проект" placeholder="Введите название проекта...">
+        </div>
+        
+        <div class="templates-grid">
+            <!-- Карточка 1: Свободное рисование -->
+            <div class="template-card" data-template="empty">
+                <div class="card-icon-wrapper">
+                    <!-- Иконка карандаша / свободного черчения -->
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
+                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <h4>Свободное планирование</h4>
+                    <p>Нарисуйте стены любой формы вручную на холсте</p>
+                </div>
+            </div>
+
+            <!-- Карточка 2: Прямоугольник -->
+            <div class="template-card" data-template="rectangle">
+                <div class="card-icon-wrapper">
+                    <!-- Иконка прямоугольной комнаты -->
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
+                        <rect x="3" y="5" width="18" height="14" rx="1" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <h4>Прямоугольная комната</h4>
+                    <p>Готовая стандартная комната из 4-х стен</p>
+                </div>
+            </div>
+
+            <!-- Карточка 3: Г-образная -->
+            <div class="template-card" data-template="l-shape">
+                <div class="card-icon-wrapper">
+                    <!-- Иконка Г-образной комнаты -->
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
+                        <path d="M5 5 v14 h14 v-7 h-7 v-7 Z"/>
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <h4>Г-образная форма</h4>
+                    <p>Помещение с выступом или угловая планировка</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="welcome-footer">
+            <button id="start-project-btn" class="start-action-btn">Начать планирование →</button>
+        </div>
+    </main>
+</div>
