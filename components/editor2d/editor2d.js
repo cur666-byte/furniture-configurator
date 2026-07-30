@@ -1,46 +1,27 @@
-/* components/editor2d/editor2d.js — Модуль 2D-редактора. Управляет холстом Canvas, размерной сеткой и логикой интерактивного черчения стен. */
-
-
+/* components/editor2d/editor2d.js — Модуль управления 2D-редактором помещений. Отвечает за измерительную сетку, режим Орто (Shift) и стрелочные строительные размеры стен на холсте Canvas. */
 
 export function initEditor2D(appState) {
     const canvas = document.getElementById('floorplan-canvas');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    let currentPoints = null; // временная точка начала черчения
-    let mousePos = { x: 0, y: 0 };
-    let currentTool = 'wall'; // текущий активный инструмент
+    let currentPoints = null; // Точка старта текущей стены
+    let mousePos = { x: 0, y: 0 }; // Позиция курсора
+    let currentTool = 'wall'; // Активный инструмент ('wall' или 'select')
+    let isShiftPressed = false; // Флаг зажатого Shift для режима Орто
 
-    // ГЕНЕРАЦИЯ ГОТОВЫХ ШАБЛОНОВ СТЕН (если в базе еще пусто)
-    if (appState.walls.length === 0) {
-        // Зададим базовый масштаб: 1 пиксель = 10 миллиметров (шкаф 600мм = 60px)
-        if (appState.template === 'rectangle') {
-            appState.walls = [
-                { x1: 150, y1: 100, x2: 550, y2: 100 }, // Верхняя (4000мм)
-                { x1: 550, y1: 100, x2: 550, y2: 400 }, // Правая (3000мм)
-                { x1: 550, y1: 400, x2: 150, y2: 400 }, // Нижняя
-                { x1: 150, y1: 400, x2: 150, y2: 100 }  // Левая
-            ];
-        } else if (appState.template === 'l-shape') {
-            appState.walls = [
-                { x1: 150, y1: 100, x2: 550, y2: 100 },
-                { x1: 550, y1: 100, x2: 550, y2: 400 },
-                { x1: 550, y1: 400, x2: 350, y2: 400 },
-                { x1: 350, y1: 400, x2: 350, y2: 250 },
-                { x1: 350, y1: 250, x2: 150, y2: 250 },
-                { x1: 150, y1: 250, x2: 150, y2: 100 }
-            ];
-        } else if (appState.template === 'polygon') {
-            appState.walls = [
-                { x1: 150, y1: 100, x2: 450, y2: 100 },
-                { x1: 450, y1: 100, x2: 550, y2: 200 },
-                { x1: 550, y1: 200, x2: 550, y2: 400 },
-                { x1: 550, y1: 400, x2: 150, y2: 400 },
-                { x1: 150, y1: 400, x2: 150, y2: 100 }
-            ];
-        }
-    }
+    // МАСШТАБ: 1 пиксель холста = 10 реальных миллиметров помещения
+    const SCALE = 10; 
 
+    // СЛУШАТЕЛИ КЛАВИАТУРЫ ДЛЯ РЕЖИМА ОРТО (90 ГРАДУСОВ)
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Shift') { isShiftPressed = true; render(); }
+    });
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'Shift') { isShiftPressed = false; render(); }
+    });
+
+    // Функция авто-подгонки холста под контейнер (без изменения глобальной верстки)
     function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
@@ -48,48 +29,117 @@ export function initEditor2D(appState) {
         render();
     }
 
-    // ИНЖЕНЕРНАЯ РАЗМЕРНАЯ СЕТКА С ЦИФРАМИ
+    // РАСЧЕТ РЕЖИМА ОРТО (выравнивание по осям X или Y)
+    function getOrthoCoordinates(start, current) {
+        if (!isShiftPressed) return current;
+        
+        const dx = Math.abs(current.x - start.x);
+        const dy = Math.abs(current.y - start.y);
+        
+        // Если сдвиг по горизонтали больше, выравниваем в ровную линию по горизонтали
+        if (dx > dy) {
+            return { x: current.x, y: start.y };
+        } else {
+            return { x: start.x, y: current.y };
+        }
+    }
+
+    // ИНЖЕНЕРНАЯ РАЗМЕРНАЯ СЕТКА
     function drawGrid() {
-        const step = 50; // 50px = 500мм в нашем масштабе
+        const step = 50; // 50px = 500мм
         ctx.lineWidth = 0.5;
-        ctx.font = '10px sans-serif';
+        ctx.font = '10px monospace';
         ctx.fillStyle = '#94a3b8';
 
-        // Вертикальные линии и подписи шкалы X
         for (let x = 0; x < canvas.width; x += step) {
-            ctx.strokeStyle = x % 100 === 0 ? '#cbd5e1' : '#f1f5f9'; // Каждые 100px линия чуть ярче (1 метр)
+            ctx.strokeStyle = x % 100 === 0 ? '#cbd5e1' : '#f1f5f9';
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            
-            if (x > 0 && x % 100 === 0) {
-                ctx.fillText(`${x * 10}мм`, x + 4, 12); // Выводим размер в мм вверху сетки
-            }
+            if (x > 0 && x % 100 === 0) ctx.fillText(`${x * SCALE}мм`, x + 4, 12);
         }
         
-        // Горизонтальные линии и подписи шкалы Y
         for (let y = 0; y < canvas.height; y += step) {
             ctx.strokeStyle = y % 100 === 0 ? '#cbd5e1' : '#f1f5f9';
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(0, canvas.height); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-            
-            if (y > 0 && y % 100 === 0) {
-                ctx.fillText(`${y * 10}мм`, 4, y - 4); // Выводим размер слева
-            }
+            if (y > 0 && y % 100 === 0) ctx.fillText(`${y * SCALE}мм`, 4, y - 4);
         }
     }
 
-    // Функция расчета расстояния между точками (длина стены)
-    function getDistance(p1, p2) {
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        return Math.round(Math.sqrt(dx * dx + dy * dy) * 10); // переводим масштаб в реальные мм
+    // ФУНКЦИЯ ОТРИСОВКИ СТРЕЛОК РАЗМЕРОВ С ЗАСЕЧКАМИ (как на чертежах)
+    function drawDimensionLine(x1, y1, x2, y2, valueText) {
+        const offset = 25; // Вынос размерной линии в сторону от стены
+        
+        // Считаем угол стены
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        
+        // Считаем перпендикулярный вектор для выноса линии
+        const pX = -Math.sin(angle) * offset;
+        const pY = Math.cos(angle) * offset;
+
+        // Координаты вынесенной линии размеров
+        const rx1 = x1 + pX;
+        const ry1 = y1 + pY;
+        const rx2 = x2 + pX;
+        const ry2 = y2 + pY;
+
+        ctx.save();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+
+        // 1. Тонкие выносные линии от стены к стрелке
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(rx1, ry1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(rx2, ry2); ctx.stroke();
+
+        // 2. Главная линия размера
+        ctx.beginPath(); ctx.moveTo(rx1, ry1); ctx.lineTo(rx2, ry2); ctx.stroke();
+
+        // 3. Рисуем засечки (наклонные штрихи по краям) под 45 градусов
+        const tickLen = 6;
+        ctx.lineWidth = 1.5;
+        
+        ctx.beginPath();
+        ctx.moveTo(rx1 - Math.cos(angle + Math.PI/4) * tickLen, ry1 - Math.sin(angle + Math.PI/4) * tickLen);
+        ctx.lineTo(rx1 + Math.cos(angle + Math.PI/4) * tickLen, ry1 + Math.sin(angle + Math.PI/4) * tickLen);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(rx2 - Math.cos(angle + Math.PI/4) * tickLen, ry2 - Math.sin(angle + Math.PI/4) * tickLen);
+        ctx.lineTo(rx2 + Math.cos(angle + Math.PI/4) * tickLen, ry2 + Math.sin(angle + Math.PI/4) * tickLen);
+        ctx.stroke();
+
+        // 4. Текст размера по центру
+        const midX = (rx1 + rx2) / 2;
+        const midY = (ry1 + ry2) / 2;
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Небольшая белая плашка под текстом, чтобы линии сетки не перекрывали цифры
+        const textWidth = ctx.measureText(valueText).width + 6;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(midX - textWidth/2, midY - 7, textWidth, 14);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(valueText, midX, midY);
+        ctx.restore();
     }
 
+    // РАСЧЕТ РАССТОЯНИЯ В МИЛЛИМЕТРАХ
+    function getDistanceInMM(p1, p2) {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        return Math.round(Math.sqrt(dx * dx + dy * dy) * SCALE);
+    }
+
+    // ГЛАВНЫЙ РЕНДЕР ЭКРАНА ЧЕРТЕЖА
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid();
 
-        // Отрисовка готовых стен из базы данных
+        // Отрисовка готовых стен
         ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 10; // Толщина стены
+        ctx.lineWidth = 12; // Жирные профессиональные стены
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -99,32 +149,30 @@ export function initEditor2D(appState) {
             ctx.lineTo(wall.x2, wall.y2);
             ctx.stroke();
 
-            // Выводим размеры прямо над готовыми стенами
-            const midX = (wall.x1 + wall.x2) / 2;
-            const midY = (wall.y1 + wall.y2) / 2;
-            const len = getDistance({x: wall.x1, y: wall.y1}, {x: wall.x2, y: wall.y2});
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.fillText(`${len}`, midX, midY - 10);
+            // Выводим размерную линию со стрелками для каждой готовой стены
+            const wallLength = getDistanceInMM({x: wall.x1, y: wall.y1}, {x: wall.x2, y: wall.y2});
+            drawDimensionLine(wall.x1, wall.y1, wall.x2, wall.y2, `${wallLength} мм`);
         });
 
-        // Отрисовка линии в процессе черчения
+        // Отрисовка активной линии черчения (в процессе)
         if (currentPoints && currentTool === 'wall') {
+            const adjustedMouse = getOrthoCoordinates(currentPoints, mousePos);
+
             ctx.strokeStyle = '#0071e3';
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.moveTo(currentPoints.x, currentPoints.y);
-            ctx.lineTo(mousePos.x, mousePos.y);
+            ctx.lineTo(adjustedMouse.x, adjustedMouse.y);
             ctx.stroke();
 
-            // Считаем текущую длину и выводим в левую панель
-            const liveLen = getDistance(currentPoints, mousePos);
+            // Выводим live-размер в левую панель параметров
+            const liveLen = getDistanceInMM(currentPoints, adjustedMouse);
             const infoText = document.getElementById('wall-len-info');
             if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">${liveLen} мм</span>`;
         }
     }
 
-    // Логика движения мыши
+    // СОБЫТИЯ МЫШИ
     canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         mousePos.x = e.clientX - rect.left;
@@ -132,7 +180,6 @@ export function initEditor2D(appState) {
         if (currentPoints) render();
     });
 
-    // Логика кликов
     canvas.addEventListener('mousedown', (e) => {
         if (currentTool !== 'wall') return;
 
@@ -143,15 +190,24 @@ export function initEditor2D(appState) {
         if (!currentPoints) {
             currentPoints = { x, y };
         } else {
-            appState.walls.push({ x1: currentPoints.x, y1: currentPoints.y, x2: x, y2: y });
+            // Применяем выравнивание Орто при сохранении стены, если Shift зажат
+            const finalPoint = getOrthoCoordinates(currentPoints, { x, y });
+            
+            appState.walls.push({ 
+                x1: currentPoints.x, 
+                y1: currentPoints.y, 
+                x2: finalPoint.x, 
+                y2: finalPoint.y 
+            });
             currentPoints = null;
+            
             const infoText = document.getElementById('wall-len-info');
             if (infoText) infoText.innerHTML = `Длина стены: <span class="highlight">—</span>`;
         }
         render();
     });
 
-    // Логика меню слева: переключение кнопок Инструментов
+    // Управление кнопками инструментов слева
     const toolWall = document.getElementById('tool-wall');
     const toolSelect = document.getElementById('tool-select');
 
@@ -172,7 +228,7 @@ export function initEditor2D(appState) {
         });
     }
 
-    // Очистить холст
+    // Кнопка очистки
     const clearBtn = document.getElementById('btn-clear-canvas');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {

@@ -1,23 +1,29 @@
-<div class="editor-container">
-    <!-- Боковая панель 2D-редактора -->
+<!-- components/editor2d/editor2d.html — Разметка интерфейса 2D-планировщика помещений. Содержит левую панель инструментов и холст чертежа. -->
+<div class="editor-2d-container">
+    <!-- Левая панель управления -->
     <aside class="editor-sidebar">
         <h3>Инструменты 2D</h3>
-        
         <div class="tool-section">
             <button class="tool-btn active" id="tool-wall">🧱 Рисовать стены</button>
-            <button class="tool-btn" id="tool-select" disabled>🎯 Выделение</button>
+            <button class="tool-btn" id="tool-select">🎯 Режим осмотра</button>
+        </div>
+        
+        <div class="info-section">
+            <h4>Параметры комнаты</h4>
+            <p>Высота потолка: <span class="highlight">2700 мм</span></p>
+            <p>Толщина стен: <span class="highlight">200 мм</span></p>
+            <p id="wall-len-info">Длина стены: <span class="highlight">—</span></p>
         </div>
 
-        <div class="info-section">
-            <h4>Параметры проекта</h4>
-            <p>Высота стен: <span id="info-height">2700</span> мм</p>
-            <p>Толщина: <span id="info-thickness">200</span> мм</p>
+        <div class="hint-section">
+            💡 Зажмите <span class="badge">Shift</span> для рисования ровных стен под 90°
         </div>
 
         <button class="clear-btn" id="btn-clear-canvas">🗑️ Очистить всё</button>
+        <button class="next-step-btn" id="btn-to-3d">Готово, в 3D →</button>
     </aside>
 
-    <!-- Область интерактивного чертежа -->
+    <!-- Обертка холста, которая изолирует размеры и не дает ломать шапку -->
     <div class="canvas-wrapper">
         <canvas id="floorplan-canvas"></canvas>
     </div>
