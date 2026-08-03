@@ -373,37 +373,35 @@ export function initEditor2D(appState) {
         if (currentTool === 'pencil') e.preventDefault();
 
     });
-     // Управление кнопками инструментов панели с очисткой незавершённых линий
-     const toolPencil = document.getElementById('tool-pencil');
-     const toolRectShape = document.getElementById('tool-rect-shape');
- 
-     if (toolPencil && toolRectShape) {
-         toolPencil.addEventListener('click', () => {
-             if (isRoomClosed) return;
-             currentTool = 'pencil';
-             toolPencil.classList.add('active'); 
-             toolRectShape.classList.remove('active');
-             canvas.style.cursor = 'crosshair';
-             
-             // ТОЧЕЧНАЯ ПРАВКА: Сбрасываем недорисованную линию при смене инструмента
-             currentPoints = null; 
-             inputBuffer = "";
-             render();
-         });
- 
-         toolRectShape.addEventListener('click', () => {
-             if (isRoomClosed) return;
-             currentTool = 'rectangle';
-             toolRectShape.classList.add('active'); 
-             toolPencil.classList.remove('active');
-             canvas.style.cursor = 'cell';
-             
-             // ТОЧЕЧНАЯ ПРАВКА: Сбрасываем недорисованную линию при смене инструмента
-             currentPoints = null; 
-             inputBuffer = "";
-             render();
-         });
-     }
+// Управление кнопками инструментов панели
+const toolPencil = document.getElementById('tool-pencil');
+const toolRectShape = document.getElementById('tool-rect-shape');
+
+function switchTool(tool) {
+    if (isRoomClosed) return;
+
+    // Если есть незавершённый контур — удаляем его полностью
+    if (appState.walls.length > 0 || currentPoints) {
+        appState.walls = [];
+        currentPoints = null;
+        inputBuffer = "";
+        checkRoomClosure();
+    }
+
+    currentTool = tool;
+
+    toolPencil.classList.toggle('active', tool === 'pencil');
+    toolRectShape.classList.toggle('active', tool === 'rectangle');
+
+    canvas.style.cursor = tool === 'pencil' ? 'crosshair' : 'cell';
+
+    render();
+}
+
+if (toolPencil && toolRectShape) {
+    toolPencil.addEventListener('click', () => switchTool('pencil'));
+    toolRectShape.addEventListener('click', () => switchTool('rectangle'));
+}
  
      // Кнопка очистки — СБРОС И ПОЛНАЯ РАЗБЛОКИРОВКА МЕНЮ С СОХРАНЕНИЕМ ТЕКУЩЕГО ИНСТРУМЕНТА
      const clearBtn = document.getElementById('btn-clear-canvas');
